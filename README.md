@@ -12,6 +12,17 @@ Here is a brief description of the codes included:
 
 - `plot_out_true.py`: plot predicted versus true halo masses.
 
+In the folder `Source`, several auxiliary routines are defined:
+
+* `params.py`: constants and parameters to be set by the user.
+
+* `routines.py`: includes some useful functions, such as routines for training the net.
+
+* `load_data.py`: contains routines to load data from simulation files.
+
+* `networks.py`: includes the definition of the networks architectures.
+
+
 ## Contact
 
-For comments, questions etc. you can contact us at <vmmunoz2@uc.cl> or <pablo.villanueva.domingo@gmail.com>.
+For comments, questions etc. you can contact me at <pablo.villanueva.domingo@gmail.com>.
