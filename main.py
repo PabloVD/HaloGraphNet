@@ -28,6 +28,7 @@ def main(use_model, learning_rate, weight_decay, n_layers, k_nn, verbose = True)
 
     # Initialize model
     model = ModelGNN(use_model, node_features, n_layers, k_nn)
+    #model = ModelGNN(use_model, node_features, k_nn)
     model.to(device)
     if verbose: print("Model: " + namemodel(model)+"\n")
 
@@ -49,23 +50,6 @@ def main(use_model, learning_rate, weight_decay, n_layers, k_nn, verbose = True)
     # Plot loss trends
     plot_losses(train_losses, valid_losses, test_loss, rel_err, model)
 
-    # Print the memory (in GB) being used now:
-    process = psutil.Process()
-    print("Memory being used after training (GB):",process.memory_info().rss/1.e9)
-
-    if device == torch.device('cuda'):#torch.cuda.is_available():
-        print("deleting")
-        del model
-        del dataset
-        del train_loader
-        del valid_loader
-        del test_loader
-        torch.cuda.empty_cache()
-
-    # Print the memory (in GB) being used now:
-    process = psutil.Process()
-    print("Memory being used after clearing (GB):",process.memory_info().rss/1.e9)
-
     return np.amin(valid_losses)
 
 
@@ -79,11 +63,11 @@ if __name__ == "__main__":
         if not os.path.exists(path):
             os.mkdir(path)
 
-    use_model = "FCN"
+    #use_model = "FCN"
     #use_model = "GCN"
     #use_model = "EdgeNet"
-    #use_model = "PointNet"
-    n_layers = 1
+    use_model = "PointNet"
+    n_layers = 3
 
     main(use_model, learning_rate, weight_decay, n_layers, k_nn)
 

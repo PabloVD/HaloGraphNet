@@ -21,16 +21,16 @@ simpath = "/projects/QUIJOTE/CAMELS/Sims/IllustrisTNG/CV_0/fof_subhalo_tab_"
 # To see ls of columns of file, type in shell: h5ls -r fof_subhalo_tab_033.hdf5
 
 # Number of simulations
-n_sims = 10#34
+n_sims = 34
 
 # Number of epochs
-epochs = 50
+epochs = 100
 
 # Learning rate
-learning_rate = 0.0001
+learning_rate = 0.001
 
 # Weight decay
-weight_decay = 1.e-2
+weight_decay = 1.e-8
 
 # Number of nearest neighbors in KNN
 k_nn = 6

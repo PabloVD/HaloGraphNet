@@ -21,6 +21,7 @@ def general_tab(path):
     SubhaloLenType = f["Subhalo/SubhaloLenType"][:,4]
     SubhaloHalfmassRadType = f["Subhalo/SubhaloHalfmassRadType"][:,4]
     SubhaloVel = f["Subhalo/SubhaloVel"][:]
+    SubhaloVel = np.sqrt(np.sum(SubhaloVel**2., 1))
 
     #StarMetal = f["Subhalo/SubhaloStarMetallicity"][:]
     #SubhaloSFR = f["Subhalo/SubhaloSFR"][:]
@@ -28,12 +29,13 @@ def general_tab(path):
 
     HaloID = np.array(f["Subhalo/SubhaloGrNr"][:], dtype=np.int32)
     HaloMass = np.log10(f["Group/GroupMass"][:])
-    #HaloMass = f["Group/Group_M_TopHat200"][:]
-    #HaloMass = np.log10(HaloMass[HaloMass>0.])
+    #HaloMass1 = f["Group/Group_M_TopHat200"][:]
+    #HaloMass = np.log10(HaloMass[HaloMass1>0.])
     GroupPos = f["Group/GroupPos"][:]
+    #GroupPos = GroupPos[HaloMass1>0.]
     f.close()
 
-    tab = np.column_stack((HaloID, SubhaloPos, SubhaloMassType, SubhaloLenType, SubhaloHalfmassRadType))#, SubhaloVel, StarMetal, SubhaloSFR, SubhaloVelDisp))
+    tab = np.column_stack((HaloID, SubhaloPos, SubhaloMassType, SubhaloLenType, SubhaloHalfmassRadType, SubhaloVel))#, StarMetal, SubhaloSFR, SubhaloVelDisp))
 
     tab = tab[tab[:,4]>0.]  # restrict to subhalos with galaxies
     tab = tab[tab[:,5]>10]  # more or less equivalent to the condition above

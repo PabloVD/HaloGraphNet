@@ -1,5 +1,7 @@
 # HaloGraphNet
 
+Predict halo masses from simulations via graph neural networks 
+
 UNDER DEVELOPMENT
 
 ## Scripts

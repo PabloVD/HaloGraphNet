@@ -1,5 +1,5 @@
 import torch
-from torch.nn import Sequential, Linear, ReLU
+from torch.nn import Sequential, Linear, ReLU, ModuleList
 from torch_geometric.nn import MessagePassing
 from torch_cluster import knn_graph
 import torch.nn.functional as F
@@ -7,7 +7,11 @@ from torch_geometric.nn import global_mean_pool, global_max_pool
 from torch_geometric import nn
 from torch_cluster import knn_graph, radius_graph
 
-
+# use GPUs if available
+if torch.cuda.is_available():
+    device = torch.device('cuda')
+else:
+    device = torch.device('cpu')
 
 # PointNet layer
 class PointNetLayer(MessagePassing):
@@ -141,7 +145,7 @@ class ModelGNN(torch.nn.Module):
             else:
                 print("Model not known...")"""
         #self.layer1 = Sequential(*layers)
-        self.layers = layers
+        self.layers = ModuleList(layers)
 
         self.lin = Sequential(Linear(latent_channels, latent_channels),
                               ReLU(),
