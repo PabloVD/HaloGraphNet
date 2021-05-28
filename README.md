@@ -1,6 +1,8 @@
 # HaloGraphNet
 
-Predict halo masses from simulations via graph neural networks 
+Predict halo masses from simulations via graph neural networks.
+
+It makes use of the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) simulations.
 
 UNDER DEVELOPMENT
 
@@ -10,9 +12,7 @@ Here is a brief description of the codes included:
 
 - `main.py`: train and test the network.
 
-- `hyperparams_tunning.py`: optimize the hyperparameters using optuna.
-
-- `plot_out_true.py`: plot predicted versus true halo masses.
+- `hyperparams_optimization.py`: optimize the hyperparameters using optuna.
 
 In the folder `Source`, several auxiliary routines are defined:
 

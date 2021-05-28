@@ -4,10 +4,8 @@
 # Example use h5py: https://github.com/franciscovillaescusa/Pylians3/blob/master/documentation/miscellaneous.md#h5py_P
 #-----------
 
-# CHECK IF CUDA IS BEING USED
 
 # data aug rotations
-# PPFNet
 
 # change namemodel()
 
@@ -50,6 +48,9 @@ def main(use_model, learning_rate, weight_decay, n_layers, k_nn, verbose = True)
     # Plot loss trends
     plot_losses(train_losses, valid_losses, test_loss, rel_err, model)
 
+    # Plot true vs predicted halo masses
+    plot_out_true_scatter(model)
+
     return np.amin(valid_losses)
 
 
@@ -59,15 +60,17 @@ if __name__ == "__main__":
 
     time_ini = time.time()
 
-    for path in ["Plots", "Models"]:
+    for path in ["Plots", "Models", "Outputs"]:
         if not os.path.exists(path):
             os.mkdir(path)
 
-    #use_model = "FCN"
-    #use_model = "GCN"
-    #use_model = "EdgeNet"
+    use_model = "DeepSet"
+    use_model = "GCN"
+    use_model = "EdgeNet"
     use_model = "PointNet"
+    #use_model = "MetaNet"
     n_layers = 3
+    k_nn = 1
 
     main(use_model, learning_rate, weight_decay, n_layers, k_nn)
 

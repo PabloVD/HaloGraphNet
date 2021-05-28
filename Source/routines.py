@@ -1,6 +1,15 @@
 import matplotlib.pyplot as plt
 from Source.params import *
 #from pysr import pysr, best, best_tex, get_hof
+from sklearn.metrics import r2_score
+from torch_geometric.transforms import Compose, RandomRotate
+
+random_rotate = Compose([
+    RandomRotate(degrees=180, axis=0),
+    RandomRotate(degrees=180, axis=1),
+    RandomRotate(degrees=180, axis=2),
+])
+
 
 # use GPUs if available
 if torch.cuda.is_available():
@@ -22,9 +31,11 @@ def train(loader, model, optimizer, criterion):
     loss_tot = 0
     for data in loader:  # Iterate in batches over the training dataset.
 
+        random_rotate(data)
+
         data.to(device)
         optimizer.zero_grad()  # Clear gradients.
-        out = model(data.x, data.batch)  # Perform a single forward pass.
+        out = model(data)  # Perform a single forward pass.
         loss = criterion(out.reshape(-1), data.y)  # Compute the loss.
         # Message passing L1 regularization (for symbolic regression)
         if use_l1 and (model.namemodel=="PointNet" or model.namemodel=="EdgeNet"):
@@ -57,7 +68,7 @@ def test(loader, model, criterion, message_reg=0):
         with torch.no_grad():
 
             data.to(device)
-            out = model(data.x, data.batch)  # Perform a single forward pass.
+            out = model(data)  # Perform a single forward pass.
             err = (out.reshape(-1) - data.y)/data.y
             #errs.append( np.abs(err.detach().numpy()).mean(axis=0) )
             errs.append( np.abs(err.detach().cpu().numpy()).mean(axis=0) )
@@ -121,12 +132,12 @@ def test(loader, model, criterion, message_reg=0):
     if message_reg and (model.namemodel=="PointNet" or model.namemodel=="EdgeNet"):
         inputs, messgs, pools, outs, trues = np.delete(inputs,0,0), np.delete(messgs,0,0), np.delete(pools,0,0), np.delete(outs,0,0), np.delete(trues,0,0)
         #print(inputs.shape, messgs.shape, outs.shape, trues.shape)
-        np.save("Models/inputs_"+namemodel(model)+".npy",inputs)
-        np.save("Models/messages_"+namemodel(model)+".npy",messgs)
-        np.save("Models/poolings_"+namemodel(model)+".npy",pools)
+        np.save("Outputs/inputs_"+namemodel(model)+".npy",inputs)
+        np.save("Outputs/messages_"+namemodel(model)+".npy",messgs)
+        np.save("Outputs/poolings_"+namemodel(model)+".npy",pools)
 
-    np.save("Models/outputs_"+namemodel(model)+".npy",outs)
-    np.save("Models/trues_"+namemodel(model)+".npy",trues)
+    np.save("Outputs/outputs_"+namemodel(model)+".npy",outs)
+    np.save("Outputs/trues_"+namemodel(model)+".npy",trues)
 
     #inputs, messgs = inputs.reshape((-1, 100)), messgs.reshape((-1,9))
     #print(inputs.shape, messgs.shape)
@@ -157,6 +168,7 @@ def training_routine(model, train_loader, test_loader, learning_rate, weight_dec
 
     return train_losses, valid_losses
 
+# Plot loss trends
 def plot_losses(train_losses, valid_losses, test_loss, err_min, model):
 
     plt.plot(range(epochs), train_losses, "r-",label="Training")
@@ -166,6 +178,25 @@ def plot_losses(train_losses, valid_losses, test_loss, err_min, model):
     #plt.title(f"Minimum relative error: {err_min:.2e}")
     plt.title(f"Test loss: {test_loss:.2e}, Minimum relative error: {err_min:.2e}")
     plt.savefig("Plots/loss_"+namemodel(model)+".pdf")
+    plt.close()
+
+# Scatter plot of true vs predicted properties
+def plot_out_true_scatter(model):
+
+    # Dataset
+    outputs = np.load("Outputs/outputs_"+namemodel(model)+".npy")
+    trues = np.load("Outputs/trues_"+namemodel(model)+".npy")
+
+    plt.plot(trues,trues,"r-")
+    plt.plot(trues,outputs,"bo",markersize=1)
+
+    #err = np.abs(trues - outputs)/trues
+    #plt.title(model+", Relative error: {:.2e}".format(err.mean()))
+    plt.title(model.namemodel+r", $R^2$={:.2f}".format(r2_score(trues,outputs)))
+    plt.ylabel("Predicted Mass")
+    plt.xlabel("True Mass")
+    plt.savefig("Plots/out_true_"+namemodel(model)+".pdf", dpi=300)
+    plt.close()
 
 # Visualization routine
 def visualize_points(data, edge_index=None, index=None):
@@ -214,3 +245,20 @@ def build_empty_graph():
 
     edge_index = torch.tensor([[], []], dtype=torch.int64)
     return edge_index
+
+
+def scat_plot(shmasses, hmasses):
+    fig_scat, ax_scat = plt.subplots()
+    ax_scat.scatter(shmasses, hmasses, color="r", s=0.1)#, label="Total mass of subhalos")
+    ax_scat.set_xlabel("Sum of stellar mass per halo")
+    ax_scat.set_ylabel("Halo mass")
+    fig_scat.savefig("Plots/scat")
+    plt.close(fig_scat)
+
+def plot_histogram(hist):
+    fig_hist, ax_hist = plt.subplots()
+    ax_hist.hist(hist,bins=20)
+    ax_hist.set_yscale("log")
+    ax_hist.set_xlabel("Number of subhalos per halo")
+    fig_hist.savefig("Plots/histogram")
+    plt.close(fig_hist)

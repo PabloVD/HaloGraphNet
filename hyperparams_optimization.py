@@ -12,14 +12,17 @@ from optuna.visualization import plot_optimization_history, plot_contour, plot_p
 def objective(trial):
 
     # Hyperparameters to optimize
-    use_model = trial.suggest_categorical("use_model", ["FCN", "PointNet"])
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-8, 1e-1, log=True)
+    #use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet", "MetaNet"])
+    #use_model = trial.suggest_categorical("use_model", ["PointNet", "MetaNet"])
+    use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet"])
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 1e-8, 1e-4, log=True)
     n_layers = trial.suggest_int("n_layers", 1, 3)
-    if use_model=="FCN":
+    if use_model=="DeepSet":
         k_nn = 1        # k_nn not used in this case, put whatever number
     else:
-        k_nn = trial.suggest_int("k_nn", 1, 10)
+        #k_nn = trial.suggest_int("k_nn", 1, 10)
+        k_nn = trial.suggest_float("k_nn", 0.1, 10.)
 
     # Some verbose
     print('\nTrial number: {}'.format(trial.number))
@@ -39,6 +42,12 @@ def objective(trial):
 
 
 if __name__ == "__main__":
+
+    time_ini = time.time()
+
+    for path in ["Plots", "Models", "Outputs"]:
+        if not os.path.exists(path):
+            os.mkdir(path)
 
     # Optuna parameters
     storage = "sqlite:///gnn"
@@ -62,8 +71,10 @@ if __name__ == "__main__":
     fig = plot_optimization_history(study)
     fig.write_image("Plots/optuna_optimization_history.png")
 
-    fig = plot_contour(study, params=["learning_rate", "weight_decay"])
+    fig = plot_contour(study, params=["learning_rate", "weight_decay", "k_nn", "use_model"])
     fig.write_image("Plots/optuna_contour.png")
 
     fig = plot_param_importances(study)
     fig.write_image("Plots/plot_param_importances.png")
+
+    print("Finished. Time elapsed:",datetime.timedelta(seconds=time.time()-time_ini))
