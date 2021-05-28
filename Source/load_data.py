@@ -135,7 +135,17 @@ def split_datasets(dataset):
     return train_loader, valid_loader, test_loader
 
 # Load data and create the dataset
-def create_dataset():
+# simtype: type of simulation, either IllustrisTNG or SIMBA
+# use_lh: 1 for using LH simulations, otherwise use the CV suite
+# n_sims: number of simulations, maximum 27 for CV and 1000 for LH
+def create_dataset(simtype = "IllustrisTNG", use_lh = False, n_sims = 27):
+
+    if use_lh:
+        # Use simulations over latin-hypercube, varying over cosmological and astrophysical parameters, and different random seeds (1000 simulations total)
+        simpath = simpathroot + simtype + "/LH_"
+    else:
+        # Use simulations with fiducial cosmological and astrophysical parameters, but different random seeds (27 simulations total)
+        simpath = simpathroot + simtype + "/CV_"
 
     hist=[]
     hmasses = []
@@ -146,11 +156,12 @@ def create_dataset():
     tottrue, totsym = [], []
 
     for sim in range(n_sims):
+
+        # To see ls of columns of file, type in shell: h5ls -r fof_subhalo_tab_033.hdf5
         path = simpath + str(sim)+"/fof_subhalo_tab_033.hdf5"
-        #path = simpath + "{:03d}.hdf5".format(sim)
+
         tab, HaloMass, HaloPos = general_tab(path)
         halolist = np.array(np.unique(tab[:,0]), dtype=np.int32)
-
 
         # Write the subhalo positions as the relative position to the host halo
         for ind in halolist:

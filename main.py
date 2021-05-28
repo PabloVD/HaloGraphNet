@@ -16,10 +16,10 @@ from Source.load_data import *
 
 
 # Main routine to train the neural net
-def main(use_model, learning_rate, weight_decay, n_layers, k_nn, verbose = True):
+def main(use_model, learning_rate, weight_decay, n_layers, k_nn, simtype = "IllustrisTNG", use_lh = False, n_sims = 27, verbose = True):
 
     # Load data and create dataset
-    dataset, node_features = create_dataset()
+    dataset, node_features = create_dataset(simtype, use_lh, n_sims)
 
     # Split dataset among training, validation and testing datasets
     train_loader, valid_loader, test_loader = split_datasets(dataset)
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     use_model = "PointNet"
     #use_model = "MetaNet"
     n_layers = 3
-    k_nn = 1
+    k_nn = 7
 
     main(use_model, learning_rate, weight_decay, n_layers, k_nn)
 

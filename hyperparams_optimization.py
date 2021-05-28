@@ -11,6 +11,10 @@ from optuna.visualization import plot_optimization_history, plot_contour, plot_p
 # Objective function to minimize
 def objective(trial):
 
+    # Simulation type
+    simtype = "IllustrisTNG"
+    use_lh = False
+
     # Hyperparameters to optimize
     #use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet", "MetaNet"])
     #use_model = trial.suggest_categorical("use_model", ["PointNet", "MetaNet"])
@@ -32,7 +36,7 @@ def objective(trial):
     print('n_layers:  {}'.format(n_layers))
     print('k_nn:  {}'.format(k_nn))
 
-    min_valid_loss = main(use_model, learning_rate, weight_decay, n_layers, k_nn, verbose = False)
+    min_valid_loss = main(use_model, learning_rate, weight_decay, n_layers, k_nn, simtype=simtype, use_lh=use_lh, verbose = False)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -52,7 +56,7 @@ if __name__ == "__main__":
     # Optuna parameters
     storage = "sqlite:///gnn"
     study_name = "gnn"
-    n_trials   = 100
+    n_trials   = 1
 
     sampler = optuna.samplers.TPESampler(n_startup_trials=10)
     study = optuna.create_study(study_name=study_name, sampler=sampler, storage=storage, load_if_exists=True)
