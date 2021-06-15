@@ -10,15 +10,17 @@ UNDER DEVELOPMENT
 
 Here is a brief description of the codes included:
 
-- `main.py`: train and test the network.
+- `main.py`: main driver to train and test the network.
 
 - `hyperparams_optimization.py`: optimize the hyperparameters using optuna.
 
 In the folder `Source`, several auxiliary routines are defined:
 
-* `params.py`: constants and parameters to be set by the user.
+* `params.py`: basic constants and initialization.
 
-* `routines.py`: includes some useful functions, such as routines for training the net.
+* `training.py`: includes routines for training the net.
+
+* `plotting.py`: includes functions for displaying the results.
 
 * `load_data.py`: contains routines to load data from simulation files.
 

@@ -2,13 +2,18 @@ import h5py
 from torch_geometric.data import Data, DataLoader
 from torch_geometric.transforms import Compose, RandomRotate
 from Source.params import *
-from Source.routines import *
+from Source.plotting import *
 
 random_rotate = Compose([
     RandomRotate(degrees=180, axis=0),
     RandomRotate(degrees=180, axis=1),
     RandomRotate(degrees=180, axis=2),
 ])
+
+Nstar_th = 10#0
+only_positions = 0#1
+radnorm = 8.    # ad hoc normalization for half-mass radius
+velnorm = 400.  # ad hoc normalization for velocity disperion
 
 # Import h5py file to construct the general dataset
 # See for explanation of different field in Illustris files: https://www.tng-project.org/data/docs/specifications/#sec2a
@@ -21,30 +26,35 @@ def general_tab(path):
     SubhaloPos = f["Subhalo/SubhaloPos"][:]/boxsize
     SubhaloMassType = f["Subhalo/SubhaloMassType"][:,4]
     SubhaloLenType = f["Subhalo/SubhaloLenType"][:,4]
-    SubhaloHalfmassRadType = f["Subhalo/SubhaloHalfmassRadType"][:,4]/boxsize
+    SubhaloHalfmassRadType = f["Subhalo/SubhaloHalfmassRadType"][:,4]/radnorm
     SubhaloVel = f["Subhalo/SubhaloVel"][:]
-    SubhaloVel = np.sqrt(np.sum(SubhaloVel**2., 1))
+    SubhaloVel = np.sqrt(np.sum(SubhaloVel**2., 1))/velnorm
 
     #StarMetal = f["Subhalo/SubhaloStarMetallicity"][:]
     #SubhaloSFR = f["Subhalo/SubhaloSFR"][:]
     #SubhaloVelDisp  = f["Subhalo/SubhaloVelDisp"][:]
 
     HaloID = np.array(f["Subhalo/SubhaloGrNr"][:], dtype=np.int32)
-    HaloMass = np.log10(f["Group/GroupMass"][:])
-    #HaloMass1 = f["Group/Group_M_TopHat200"][:]
+    HaloMass = f["Group/GroupMass"][:]
+    #HaloMass = f["Group/Group_M_TopHat200"][:]
     #HaloMass = np.log10(HaloMass[HaloMass1>0.])
+    HaloMass = np.log10(HaloMass)
     GroupPos = f["Group/GroupPos"][:]/boxsize
     #GroupPos = GroupPos[HaloMass1>0.]
     f.close()
 
     tab = np.column_stack((HaloID, SubhaloPos, SubhaloMassType, SubhaloLenType, SubhaloHalfmassRadType, SubhaloVel))#, StarMetal, SubhaloSFR, SubhaloVelDisp))
 
-    tab = tab[tab[:,4]>0.]  # restrict to subhalos with galaxies
-    tab = tab[tab[:,5]>10]  # more or less equivalent to the condition above
+    tab = tab[tab[:,4]>0.]  # restrict to subhalos with stars
+    tab = tab[tab[:,5]>Nstar_th]  # more or less equivalent to the condition above
     tab[:,4] = np.log10(tab[:,4])
     #tab[:,5] = np.log10(tab[:,5])
 
     tab = np.delete(tab, 5, 1)  # remove number of subhalos, since they are not observable
+
+    if only_positions:
+        tab = np.column_stack((tab[:,0],tab[:,1],tab[:,2],tab[:,3]))
+
 
     """halolist = np.array(np.unique(tab[:,0]), dtype=np.int32)
     for ind in halolist:
@@ -135,19 +145,17 @@ def split_datasets(dataset):
     return train_loader, valid_loader, test_loader
 
 # Load data and create the dataset
-# simtype: type of simulation, either IllustrisTNG or SIMBA
-# use_lh: 1 for using LH simulations, otherwise use the CV suite
+# simtype: type of simulation, either "IllustrisTNG" or "SIMBA"
+# simset: set of simulations:
+#       LH: Use simulations over latin-hypercube, varying over cosmological and astrophysical parameters, and different random seeds (1000 simulations total)
+#       CV: Use simulations with fiducial cosmological and astrophysical parameters, but different random seeds (27 simulations total)
 # n_sims: number of simulations, maximum 27 for CV and 1000 for LH
-def create_dataset(simtype = "IllustrisTNG", use_lh = False, n_sims = 27):
+def create_dataset(simtype = "IllustrisTNG", simset = "CV", n_sims = 27):
 
-    if use_lh:
-        # Use simulations over latin-hypercube, varying over cosmological and astrophysical parameters, and different random seeds (1000 simulations total)
-        simpath = simpathroot + simtype + "/LH_"
-    else:
-        # Use simulations with fiducial cosmological and astrophysical parameters, but different random seeds (27 simulations total)
-        simpath = simpathroot + simtype + "/CV_"
+    simpath = simpathroot + simtype + "/"+simset+"_"
+    print("Using "+simtype+" simulations, set "+simset)
 
-    hist=[]
+    hist = []
     hmasses = []
     shmasses = []
     dataset = []
@@ -167,49 +175,62 @@ def create_dataset(simtype = "IllustrisTNG", use_lh = False, n_sims = 27):
         for ind in halolist:
             tab[tab[:,0]==ind][:,1:4] += -HaloPos[ind]
 
+        #print(HaloMass.mean(), HaloMass.std(), HaloMass.min(), HaloMass.max())
+
         # Normalize columns (except ID)
-        tab[:,1:], HaloMass = normalize(tab[:,1:]), normalize(HaloMass)
+        #tab[:,1:] = normalize(tab[:,1:])
+        #HaloMass = normalize(HaloMass)
+        #mean, std = tab[:,1:].mean(axis=0), tab[:,1:].std(axis=0)
+        #print(mean, std)
+
+        #print(HaloMass.mean(), HaloMass.std(), HaloMass.min(), HaloMass.max())
+        #exit()
 
         for ind in halolist:
 
             # Select subhalos within a halo with index ind
             tab_halo = tab[tab[:,0]==ind][:,1:]
 
-            # Take as global quantities of the halo the number of subhalos and total stellar mass
-            u = np.zeros((1,2), dtype=np.float32)
-            u[0,0] = tab_halo.shape[0]
-            u[0,1] = np.log10(np.sum(10.**tab_halo[:,4]))
+            if tab_halo.shape[0]>1:
+            #if HaloMass[ind]>=1.:
 
-            # Create the graph of the halo (pos is not equal to x[:3] after that, why?)
-            graph = Data(x=torch.tensor(tab_halo, dtype=torch.float32), pos=torch.tensor(tab_halo[:,:3], dtype=torch.float32), y=torch.tensor(HaloMass[ind], dtype=torch.float32), u=torch.tensor(u, dtype=torch.float))
-            #graph = Data(x=torch.tensor(tab_halo, dtype=torch.float32), y=torch.tensor(HaloMass[ind], dtype=torch.float32), u=torch.tensor(u, dtype=torch.float))
+                # Take as global quantities of the halo the number of subhalos and total stellar mass
+                u = np.zeros((1,2), dtype=np.float32)
+                u[0,0] = tab_halo.shape[0]  # number of subhalos
+                if not only_positions:
+                    u[0,1] = np.log10(np.sum(10.**tab_halo[:,4]))
 
-            # Some quantities
-            num_subhalos = graph.x.shape[0]
-            #if (num_subhalos>=submin):
-            subs+=num_subhalos
-            hist.append(num_subhalos)
-            hmasses.append(np.array(graph.y))
-            shmasses.append(np.log10(np.sum(10.**np.array(graph.x[:,3]))))
-            dataset.append(graph)
+                # Create the graph of the halo (pos is not equal to x[:3] after that, why?)
+                graph = Data(x=torch.tensor(tab_halo, dtype=torch.float32), pos=torch.tensor(tab_halo[:,:3], dtype=torch.float32), y=torch.tensor(HaloMass[ind], dtype=torch.float32), u=torch.tensor(u, dtype=torch.float))
+                #graph = Data(x=torch.tensor(tab_halo, dtype=torch.float32), y=torch.tensor(HaloMass[ind], dtype=torch.float32), u=torch.tensor(u, dtype=torch.float))
 
-            #ins = graph.x[:,4].detach().numpy()
-            #symbreg_err.append( np.abs(total_fit(ins) - graph.y)/graph.y )
-            #tottrue.append(graph.y)
-            #totsym.append(total_fit(ins))
-
-            if data_aug:
-                graph = random_rotate(graph)
-                dataset.append(graph)
+                # Some quantities
+                num_subhalos = graph.x.shape[0]
+                #if (num_subhalos>=submin):
                 subs+=num_subhalos
+                hist.append(num_subhalos)
+                hmasses.append(np.array(graph.y))
+                if not only_positions:
+                    shmasses.append(np.log10(np.sum(10.**np.array(graph.x[:,3]))))
+                dataset.append(graph)
+
+                #ins = graph.x[:,4].detach().numpy()
+                #symbreg_err.append( np.abs(total_fit(ins) - graph.y)/graph.y )
+                #tottrue.append(graph.y)
+                #totsym.append(total_fit(ins))
+
+                if data_aug:
+                    graph = random_rotate(graph)
+                    dataset.append(graph)
+                    subs+=num_subhalos
 
     print("Total number of halos", len(dataset), "Total number of subhalos", subs)
 
     node_features = tab.shape[1]-1  # Number of features. Substract halo index
 
-    scat_plot(shmasses, hmasses)
-    plot_histogram(hist)
-    #exit()
+    if not only_positions:
+        scat_plot(shmasses, hmasses, simtype, simset)
+    plot_histogram(hist, simtype, simset)
 
     # Normalize (not working)
     #dataset = normalize_dataset(dataset)

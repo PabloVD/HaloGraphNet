@@ -13,20 +13,25 @@ def objective(trial):
 
     # Simulation type
     simtype = "IllustrisTNG"
-    use_lh = False
+    simset = "CV"
+    n_sims = 27
+    n_epochs = 200
 
     # Hyperparameters to optimize
     #use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet", "MetaNet"])
     #use_model = trial.suggest_categorical("use_model", ["PointNet", "MetaNet"])
-    use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet"])
+    use_model = trial.suggest_categorical("use_model", ["DeepSet", "EdgeNet", "PointNet"])
+    #use_model = "PointNet"
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
-    weight_decay = trial.suggest_float("weight_decay", 1e-8, 1e-4, log=True)
+    weight_decay = trial.suggest_float("weight_decay", 1e-8, 1e-5, log=True)
     n_layers = trial.suggest_int("n_layers", 1, 3)
     if use_model=="DeepSet":
         k_nn = 1        # k_nn not used in this case, put whatever number
     else:
         #k_nn = trial.suggest_int("k_nn", 1, 10)
         k_nn = trial.suggest_float("k_nn", 0.1, 10.)
+
+    params = [use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, simtype, simset]
 
     # Some verbose
     print('\nTrial number: {}'.format(trial.number))
@@ -36,12 +41,12 @@ def objective(trial):
     print('n_layers:  {}'.format(n_layers))
     print('k_nn:  {}'.format(k_nn))
 
-    min_valid_loss = main(use_model, learning_rate, weight_decay, n_layers, k_nn, simtype=simtype, use_lh=use_lh, verbose = False)
+    min_test_loss = main(params, n_sims=n_sims, verbose = False)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
 
-    return min_valid_loss
+    return min_test_loss
 
 
 
@@ -56,7 +61,7 @@ if __name__ == "__main__":
     # Optuna parameters
     storage = "sqlite:///gnn"
     study_name = "gnn"
-    n_trials   = 1
+    n_trials   = 100
 
     sampler = optuna.samplers.TPESampler(n_startup_trials=10)
     study = optuna.create_study(study_name=study_name, sampler=sampler, storage=storage, load_if_exists=True)
@@ -75,7 +80,7 @@ if __name__ == "__main__":
     fig = plot_optimization_history(study)
     fig.write_image("Plots/optuna_optimization_history.png")
 
-    fig = plot_contour(study, params=["learning_rate", "weight_decay", "k_nn", "use_model"])
+    fig = plot_contour(study, params=["learning_rate", "weight_decay", "k_nn"])
     fig.write_image("Plots/optuna_contour.png")
 
     fig = plot_param_importances(study)

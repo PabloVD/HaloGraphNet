@@ -1,7 +1,5 @@
-import matplotlib.pyplot as plt
 from Source.params import *
 #from pysr import pysr, best, best_tex, get_hof
-from sklearn.metrics import r2_score
 from torch_geometric.transforms import Compose, RandomRotate
 
 random_rotate = Compose([
@@ -18,11 +16,6 @@ if torch.cuda.is_available():
 else:
     print('CUDA Not Available')
     device = torch.device('cpu')
-
-# Name of the model and hyperparameters
-def namemodel(model):
-    #return "model_"+model.__class__.__name__+"_lr_{:.2e}_weightdecay_{:.2e}_epochs_{:d}".format(learning_rate,weight_decay,epochs)
-    return "model_"+model.namemodel+"_lr_{:.2e}_weightdecay_{:.2e}_epochs_{:d}".format(learning_rate,weight_decay,epochs)
 
 # Training step
 def train(loader, model, optimizer, criterion):
@@ -49,7 +42,7 @@ def train(loader, model, optimizer, criterion):
     return loss_tot/len(loader)
 
 # Testing/validation step
-def test(loader, model, criterion, message_reg=0):
+def test(loader, model, criterion, params, message_reg=0):
     model.eval()
 
     if model.namemodel=="PointNet":
@@ -132,34 +125,36 @@ def test(loader, model, criterion, message_reg=0):
     if message_reg and (model.namemodel=="PointNet" or model.namemodel=="EdgeNet"):
         inputs, messgs, pools, outs, trues = np.delete(inputs,0,0), np.delete(messgs,0,0), np.delete(pools,0,0), np.delete(outs,0,0), np.delete(trues,0,0)
         #print(inputs.shape, messgs.shape, outs.shape, trues.shape)
-        np.save("Outputs/inputs_"+namemodel(model)+".npy",inputs)
-        np.save("Outputs/messages_"+namemodel(model)+".npy",messgs)
-        np.save("Outputs/poolings_"+namemodel(model)+".npy",pools)
+        np.save("Outputs/inputs_"+namemodel(params)+".npy",inputs)
+        np.save("Outputs/messages_"+namemodel(params)+".npy",messgs)
+        np.save("Outputs/poolings_"+namemodel(params)+".npy",pools)
 
-    np.save("Outputs/outputs_"+namemodel(model)+".npy",outs)
-    np.save("Outputs/trues_"+namemodel(model)+".npy",trues)
+    np.save("Outputs/outputs_"+namemodel(params)+".npy",outs)
+    np.save("Outputs/trues_"+namemodel(params)+".npy",trues)
 
     #inputs, messgs = inputs.reshape((-1, 100)), messgs.reshape((-1,9))
     #print(inputs.shape, messgs.shape)
     return loss_tot/len(loader), np.array(errs).mean(axis=0)
 
 # Training procedure
-def training_routine(model, train_loader, test_loader, learning_rate, weight_decay, verbose=True):
+def training_routine(model, train_loader, test_loader, params, verbose=True):
+
+    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, simtype, simset = params
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = torch.nn.MSELoss()
 
     train_losses, valid_losses = [], []
     valid_loss_min, err_min = 1000., 1000.
-    for epoch in range(1, epochs+1):
+    for epoch in range(1, n_epochs+1):
         train_loss = train(train_loader, model, optimizer, criterion)
-        test_loss, err = test(test_loader, model, criterion)
+        test_loss, err = test(test_loader, model, criterion, params)
         train_losses.append(train_loss); valid_losses.append(test_loss)
 
         # Save model if it has improved
         if test_loss <= valid_loss_min:
             if verbose: print("Validation loss decreased ({:.2e} --> {:.2e}).  Saving model ...".format(valid_loss_min,test_loss))
-            torch.save(model.state_dict(), "Models/"+namemodel(model))
+            torch.save(model.state_dict(), "Models/"+namemodel(params))
             valid_loss_min = test_loss
         if err < err_min:
             err_min = err
@@ -168,58 +163,6 @@ def training_routine(model, train_loader, test_loader, learning_rate, weight_dec
 
     return train_losses, valid_losses
 
-# Plot loss trends
-def plot_losses(train_losses, valid_losses, test_loss, err_min, model):
-
-    plt.plot(range(epochs), train_losses, "r-",label="Training")
-    plt.plot(range(epochs), valid_losses, "b:",label="Validation")
-    plt.legend()
-    plt.yscale("log")
-    #plt.title(f"Minimum relative error: {err_min:.2e}")
-    plt.title(f"Test loss: {test_loss:.2e}, Minimum relative error: {err_min:.2e}")
-    plt.savefig("Plots/loss_"+namemodel(model)+".pdf")
-    plt.close()
-
-# Scatter plot of true vs predicted properties
-def plot_out_true_scatter(model):
-
-    # Dataset
-    outputs = np.load("Outputs/outputs_"+namemodel(model)+".npy")
-    trues = np.load("Outputs/trues_"+namemodel(model)+".npy")
-
-    plt.plot(trues,trues,"r-")
-    plt.plot(trues,outputs,"bo",markersize=1)
-
-    #err = np.abs(trues - outputs)/trues
-    #plt.title(model+", Relative error: {:.2e}".format(err.mean()))
-    plt.title(model.namemodel+r", $R^2$={:.2f}".format(r2_score(trues,outputs)))
-    plt.ylabel("Predicted Mass")
-    plt.xlabel("True Mass")
-    plt.savefig("Plots/out_true_"+namemodel(model)+".pdf", dpi=300)
-    plt.close()
-
-# Visualization routine
-def visualize_points(data, edge_index=None, index=None):
-
-    pos = data.x[:,:2]
-    c_o_m = data.y
-    fig = plt.figure(figsize=(4, 4))
-    if edge_index is not None:
-        for (src, dst) in edge_index.t().tolist():
-            src = pos[src].tolist()
-            dst = pos[dst].tolist()
-            plt.plot([src[0], dst[0]], [src[1], dst[1]], linewidth=1, color='black')
-    if index is None:
-        plt.scatter(pos[:, 0], pos[:, 1], s=50, zorder=1000)
-    else:
-       mask = torch.zeros(pos.size(0), dtype=torch.bool)
-       mask[index] = True
-       plt.scatter(pos[~mask, 0], pos[~mask, 1], s=50, color='lightgray', zorder=1000)
-       plt.scatter(pos[mask, 0], pos[mask, 1], s=50, zorder=1000)
-
-    plt.axis('off')
-    #plt.savefig("loss.pdf")
-    plt.show()
 
 # Creates a complete graph. For a given set of nodes, creates a set of edges connecting all the nodes
 def build_complete_graph(num_nodes):
@@ -245,20 +188,3 @@ def build_empty_graph():
 
     edge_index = torch.tensor([[], []], dtype=torch.int64)
     return edge_index
-
-
-def scat_plot(shmasses, hmasses):
-    fig_scat, ax_scat = plt.subplots()
-    ax_scat.scatter(shmasses, hmasses, color="r", s=0.1)#, label="Total mass of subhalos")
-    ax_scat.set_xlabel("Sum of stellar mass per halo")
-    ax_scat.set_ylabel("Halo mass")
-    fig_scat.savefig("Plots/scat")
-    plt.close(fig_scat)
-
-def plot_histogram(hist):
-    fig_hist, ax_hist = plt.subplots()
-    ax_hist.hist(hist,bins=20)
-    ax_hist.set_yscale("log")
-    ax_hist.set_xlabel("Number of subhalos per halo")
-    fig_hist.savefig("Plots/histogram")
-    plt.close(fig_hist)

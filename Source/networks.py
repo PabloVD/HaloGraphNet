@@ -93,6 +93,47 @@ class EdgeLayer(MessagePassing):
 
         return self.messages
 
+
+class EdgePointLayer(MessagePassing):
+    def __init__(self, in_channels, mid_channels, out_channels, use_mod=1):
+        # Message passing with "max" aggregation.
+        super(EdgePointLayer, self).__init__('max')
+
+        # Initialization of the MLP:
+        # Here, the number of input features correspond to the hidden node
+        # dimensionality plus point dimensionality (=3, or 1 if only modulus is used).
+        self.mlp = Sequential(Linear(2*in_channels-2, mid_channels),
+                              ReLU(),
+                              Linear(mid_channels, mid_channels),
+                              ReLU(),
+                              Linear(mid_channels, out_channels))
+
+        self.messages = 0.
+        self.input = 0.
+        self.use_mod = use_mod
+
+    def forward(self, x, edge_index):
+        # Start propagating messages.
+        return self.propagate(edge_index, x=x)
+
+    def message(self, x_i, x_j):
+        # x_j defines the features of neighboring nodes as shape [num_edges, in_channels]
+        # pos_j defines the position of neighboring nodes as shape [num_edges, 3]
+        # pos_i defines the position of central nodes as shape [num_edges, 3]
+
+        pos_i, pos_j = x_i[:,:3], x_j[:,:3]
+
+        input = pos_j - pos_i  # Compute spatial relation.
+        input = input[:,0]**2.+input[:,1]**2.+input[:,2]**2.
+        input = input.view(input.shape[0], 1)
+        input = torch.cat([x_i, x_j[:,3:], input], dim=-1)
+
+        self.input = input
+        self.messages = self.mlp(input)
+
+        return self.messages
+
+
 # Node model for the MetaLayer
 class NodeModel(torch.nn.Module):
     def __init__(self, in_channels, hidden_channels, latent_channels):
@@ -194,6 +235,7 @@ class ModelGNN(torch.nn.Module):
 
             elif use_model=="EdgeNet":
                 lay = EdgeLayer(in_channels, hidden_channels, latent_channels)
+                #lay = EdgePointLayer(in_channels, hidden_channels, latent_channels)
                 """lay = EdgeConv(Sequential(
                     Linear(2*in_channels, hidden_channels),
                 	ReLU(),
