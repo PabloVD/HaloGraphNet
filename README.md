@@ -2,14 +2,12 @@
 
 Predict halo masses from simulations via Graph Neural Networks.
 
-Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) simulations, hydrodynamic simulations specially suited for Machine Learning purposes.
-
-Given a halo and its subhalos, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the halo mass.
+Given a dark matter halo and its galaxies, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the halo mass. Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) simulations, hydrodynamic simulations specially suited for Machine Learning purposes. Neural nets architectures are defined making use of the package [PyTorch-geometric](https://pytorch-geometric.readthedocs.io/en/latest/).
 
 
 IN DEVELOPMENT
 
-<img src="visualize_graph.png" width="200">
+<img src="visualize_graph.png" width="500">
 
 ## Scripts
 
