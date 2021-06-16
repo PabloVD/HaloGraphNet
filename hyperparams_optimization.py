@@ -15,23 +15,27 @@ def objective(trial):
     simtype = "IllustrisTNG"
     simset = "CV"
     n_sims = 27
+
+    # Training params
     n_epochs = 200
+    training = True
 
     # Hyperparameters to optimize
     #use_model = trial.suggest_categorical("use_model", ["DeepSet", "PointNet", "MetaNet"])
     #use_model = trial.suggest_categorical("use_model", ["PointNet", "MetaNet"])
-    use_model = trial.suggest_categorical("use_model", ["DeepSet", "EdgeNet", "PointNet"])
+    use_model = trial.suggest_categorical("use_model", ["DeepSet", "EdgeNet", "PointNet", "EdgePoint"])
     #use_model = "PointNet"
     learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True)
     weight_decay = trial.suggest_float("weight_decay", 1e-8, 1e-5, log=True)
-    n_layers = trial.suggest_int("n_layers", 1, 3)
+    n_layers = trial.suggest_int("n_layers", 1, 4)
     if use_model=="DeepSet":
         k_nn = 1        # k_nn not used in this case, put whatever number
     else:
         #k_nn = trial.suggest_int("k_nn", 1, 10)
-        k_nn = trial.suggest_float("k_nn", 0.1, 10.)
+        #k_nn = trial.suggest_float("k_nn", 0.1, 10.)
+        k_nn = trial.suggest_float("k_nn", 0.01, 10., log=True)
 
-    params = [use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, simtype, simset]
+    params = [use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simtype, simset, n_sims]
 
     # Some verbose
     print('\nTrial number: {}'.format(trial.number))
@@ -41,7 +45,7 @@ def objective(trial):
     print('n_layers:  {}'.format(n_layers))
     print('k_nn:  {}'.format(k_nn))
 
-    min_test_loss = main(params, n_sims=n_sims, verbose = False)
+    min_test_loss = main(params, verbose = False)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -80,7 +84,7 @@ if __name__ == "__main__":
     fig = plot_optimization_history(study)
     fig.write_image("Plots/optuna_optimization_history.png")
 
-    fig = plot_contour(study, params=["learning_rate", "weight_decay", "k_nn"])
+    fig = plot_contour(study, params=["learning_rate", "weight_decay", "k_nn", "use_model"])
     fig.write_image("Plots/optuna_contour.png")
 
     fig = plot_param_importances(study)

@@ -1,10 +1,15 @@
 # HaloGraphNet
 
-Predict halo masses from simulations via graph neural networks.
+Predict halo masses from simulations via Graph Neural Networks.
 
-It makes use of the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) simulations.
+Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) simulations, hydrodynamic simulations specially suited for Machine Learning purposes.
 
-UNDER DEVELOPMENT
+Given a halo and its subhalos, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the halo mass.
+
+
+IN DEVELOPMENT
+
+![graph sample](visualize_graph.png)
 
 ## Scripts
 
@@ -12,11 +17,15 @@ Here is a brief description of the codes included:
 
 - `main.py`: main driver to train and test the network.
 
+- `params.py`: list of default hyperparameters, to be modified by the user.
+
 - `hyperparams_optimization.py`: optimize the hyperparameters using optuna.
+
+- `visualize_graphs.py`: display several halos as graphs.
 
 In the folder `Source`, several auxiliary routines are defined:
 
-* `params.py`: basic constants and initialization.
+* `constants.py`: basic constants and initialization.
 
 * `training.py`: includes routines for training the net.
 

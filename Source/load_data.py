@@ -1,7 +1,7 @@
 import h5py
 from torch_geometric.data import Data, DataLoader
 from torch_geometric.transforms import Compose, RandomRotate
-from Source.params import *
+from Source.constants import *
 from Source.plotting import *
 
 random_rotate = Compose([
@@ -11,7 +11,7 @@ random_rotate = Compose([
 ])
 
 Nstar_th = 10#0
-only_positions = 0#1
+only_positions = 0
 radnorm = 8.    # ad hoc normalization for half-mass radius
 velnorm = 400.  # ad hoc normalization for velocity disperion
 

@@ -235,13 +235,15 @@ class ModelGNN(torch.nn.Module):
 
             elif use_model=="EdgeNet":
                 lay = EdgeLayer(in_channels, hidden_channels, latent_channels)
-                #lay = EdgePointLayer(in_channels, hidden_channels, latent_channels)
                 """lay = EdgeConv(Sequential(
                     Linear(2*in_channels, hidden_channels),
                 	ReLU(),
                 	Linear(hidden_channels, hidden_channels),
                 	ReLU(),
                 	Linear(hidden_channels, latent_channels)))"""  # Using the pytorch-geometric implementation, same result
+
+            elif use_model=="EdgePoint":
+                lay = EdgePointLayer(in_channels, hidden_channels, latent_channels)
 
             elif use_model=="MetaNet":
                 #print("inchanels",in_channels)
@@ -267,7 +269,7 @@ class ModelGNN(torch.nn.Module):
                               ReLU(),
                               Linear(latent_channels, latent_channels),
                               ReLU(),
-                              Linear(latent_channels, 1))
+                              Linear(latent_channels, 2))
 
         self.k_nn = k_nn
         self.pooled = 0.

@@ -1,4 +1,4 @@
-from Source.params import *
+from Source.constants import *
 #from pysr import pysr, best, best_tex, get_hof
 from torch_geometric.transforms import Compose, RandomRotate
 
@@ -29,7 +29,13 @@ def train(loader, model, optimizer, criterion):
         data.to(device)
         optimizer.zero_grad()  # Clear gradients.
         out = model(data)  # Perform a single forward pass.
-        loss = criterion(out.reshape(-1), data.y)  # Compute the loss.
+        y_out, err_out = out[:,0], out[:,1]
+
+        #loss_mse = criterion(y_out, data.y)  # Compute the loss.
+        loss_mse = torch.mean((y_out - data.y)**2 , axis=0)
+        loss_lfi = torch.mean(((y_out - data.y)**2 - err_out**2)**2, axis=0)
+        loss = torch.log(loss_mse) + torch.log(loss_lfi)
+
         # Message passing L1 regularization (for symbolic regression)
         if use_l1 and (model.namemodel=="PointNet" or model.namemodel=="EdgeNet"):
             mpL1 = l1_reg*torch.sum(torch.abs(model.layer1.messages))
@@ -54,6 +60,7 @@ def test(loader, model, criterion, params, message_reg=0):
     pools = np.zeros((1,100))
     outs = np.zeros((1))
     trues = np.zeros((1))
+    yerrors = np.zeros((1))
 
     errs = []
     loss_tot = 0
@@ -62,10 +69,16 @@ def test(loader, model, criterion, params, message_reg=0):
 
             data.to(device)
             out = model(data)  # Perform a single forward pass.
-            err = (out.reshape(-1) - data.y)/data.y
+            y_out, err_out = out[:,0], out[:,1]
+            err = (y_out.reshape(-1) - data.y)/data.y
             #errs.append( np.abs(err.detach().numpy()).mean(axis=0) )
             errs.append( np.abs(err.detach().cpu().numpy()).mean(axis=0) )
-            loss = criterion(out.reshape(-1), data.y)
+
+            #loss_mse = criterion(y_out, data.y)  # Compute the loss.
+            loss_mse = torch.mean((y_out - data.y)**2 , axis=0)
+            loss_lfi = torch.mean(((y_out - data.y)**2 - err_out**2)**2, axis=0)
+            loss = torch.log(loss_mse) + torch.log(loss_lfi)
+
             # Message passing L1 regularization (for symbolic regression)
             if use_l1 and (model.namemodel=="PointNet" or model.namemodel=="EdgeNet"):
                 mpL1 = l1_reg*torch.sum(torch.abs(model.layer1.messages))
@@ -115,8 +128,10 @@ def test(loader, model, criterion, params, message_reg=0):
                     unary_operators=[ "exp", "abs", "logm", "square", "cube", "sqrtm"])
                 print(best(equations))"""
 
-            outs = np.append(outs, out.reshape(-1).detach().cpu().numpy(), 0)
+            outs = np.append(outs, y_out.detach().cpu().numpy(), 0)
             trues = np.append(trues, data.y.detach().cpu().numpy(), 0)
+            yerrors = np.append(yerrors, err_out.detach().cpu().numpy(), 0)
+
 
     #inputs, messgs = np.array(inputs), np.array(messgs)
     #flat_list = [item for sublist in t for item in sublist]
@@ -131,6 +146,7 @@ def test(loader, model, criterion, params, message_reg=0):
 
     np.save("Outputs/outputs_"+namemodel(params)+".npy",outs)
     np.save("Outputs/trues_"+namemodel(params)+".npy",trues)
+    np.save("Outputs/errors_"+namemodel(params)+".npy",yerrors)
 
     #inputs, messgs = inputs.reshape((-1, 100)), messgs.reshape((-1,9))
     #print(inputs.shape, messgs.shape)
@@ -139,7 +155,7 @@ def test(loader, model, criterion, params, message_reg=0):
 # Training procedure
 def training_routine(model, train_loader, test_loader, params, verbose=True):
 
-    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, simtype, simset = params
+    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simtype, simset, n_sims = params
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = torch.nn.MSELoss()
