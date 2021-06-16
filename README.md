@@ -9,7 +9,7 @@ Given a halo and its subhalos, creates a graph with information about the 3D pos
 
 IN DEVELOPMENT
 
-![graph sample](visualize_graph.png)
+![graph sample](visualize_graph.png =200x)
 
 ## Scripts
 
