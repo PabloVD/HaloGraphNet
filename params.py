@@ -4,18 +4,18 @@
 use_model = "DeepSet"
 #use_model = "GCN"
 use_model = "EdgeNet"
-use_model = "PointNet"
+#use_model = "PointNet"
 #use_model = "EdgePoint"
 #use_model = "MetaNet"
 
 # Learning rate
-learning_rate = 0.001
+learning_rate = 1.e-4
 # Weight decay
-weight_decay = 1.e-8#1.e-7
+weight_decay = 1.e-6#1.e-7
 # Number of layers of each graph layer
-n_layers = 3
+n_layers = 4
 # Number of nearest neighbors in kNN / radius of NNs
-k_nn = 8#3
+k_nn = 0.07#8#3
 
 # Number of epochs
 n_epochs = 200

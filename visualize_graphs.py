@@ -33,10 +33,11 @@ def display_graphs(simtype, simset, n_sims, k_nn):
     # Load data and create dataset
     dataset, node_features = create_dataset(simtype, simset, n_sims)
 
-    for i, data in enumerate(dataset[:10]):
-        edge_index = radius_graph(data.pos, r=k_nn)
-        #visualize_points(data, i, edge_index)
-        visualize_points_3D(data, i, edge_index)
+    for i, data in enumerate(dataset[:20]):
+        if (i%2)==0:
+            edge_index = radius_graph(data.pos, r=k_nn)
+            #visualize_points(data, i, edge_index)
+            visualize_points_3D(data, i, edge_index)
 
 
 #--- MAIN ---#
@@ -44,7 +45,7 @@ def display_graphs(simtype, simset, n_sims, k_nn):
 time_ini = time.time()
 
 # Number of nearest neighbors in kNN / radius of NNs
-k_nn = 1
+k_nn = 0.07
 # Simulation suite, choose between "IllustrisTNG" and "SIMBA"
 simtype = "IllustrisTNG"
 # Simulation set, choose between "CV" and "LH"
