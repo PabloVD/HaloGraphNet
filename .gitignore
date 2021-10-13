@@ -1,1 +1,4 @@
 .DS_Store
+batchfile.slurm
+simbatest_batchfile.slurm
+tunning_batchfile.slurm

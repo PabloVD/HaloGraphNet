@@ -1,7 +1,7 @@
 
 
 # Choose the GNN architecture between "DeepSet", "GCN", "EdgeNet", "PointNet", "MetaNet"
-use_model = "DeepSet"
+#use_model = "DeepSet"
 #use_model = "GCN"
 use_model = "EdgeNet"
 #use_model = "PointNet"
@@ -9,23 +9,24 @@ use_model = "EdgeNet"
 #use_model = "MetaNet"
 
 # Learning rate
-learning_rate = 1.e-4
+learning_rate = 1.7011179375158516e-05
 # Weight decay
-weight_decay = 1.e-6#1.e-7
+weight_decay = 4.2340764325861004e-07
 # Number of layers of each graph layer
-n_layers = 4
+n_layers = 1
 # Number of nearest neighbors in kNN / radius of NNs
-k_nn = 0.07#8#3
+k_nn = 0.0640507737116604
 
 # Number of epochs
-n_epochs = 200
+n_epochs = 150
 # If training, set to True, otherwise loads a pretrained model and tests it
 training = True
 # Simulation suite, choose between "IllustrisTNG" and "SIMBA"
-simtype = "IllustrisTNG"
+#simsuite = "SIMBA"
+simsuite = "IllustrisTNG"
 # Simulation set, choose between "CV" and "LH"
 simset = "CV"
 # Number of simulations considered, maximum 27 for CV and 1000 for LH
 n_sims = 27
 
-params = [use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simtype, simset, n_sims]
+params = [use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims]

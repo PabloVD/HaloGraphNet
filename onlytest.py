@@ -8,10 +8,10 @@ time_ini = time.time()
 # If training, set to True, otherwise loads a pretrained model and tests it
 training = False
 # Simulation suite, choose between "IllustrisTNG" and "SIMBA"
-simtype = "SIMBA"
+simsuite = "SIMBA"
 
 params[6] = training
-params[7] = simtype
+params[7] = simsuite
 
 
 main(params)

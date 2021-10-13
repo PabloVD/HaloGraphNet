@@ -94,6 +94,7 @@ class EdgeLayer(MessagePassing):
         return self.messages
 
 
+# Mix of EdgeNet and PointNet, using only modulus of the distance between neighbors
 class EdgePointLayer(MessagePassing):
     def __init__(self, in_channels, mid_channels, out_channels, use_mod=1):
         # Message passing with "max" aggregation.
@@ -235,18 +236,12 @@ class ModelGNN(torch.nn.Module):
 
             elif use_model=="EdgeNet":
                 lay = EdgeLayer(in_channels, hidden_channels, latent_channels)
-                """lay = EdgeConv(Sequential(
-                    Linear(2*in_channels, hidden_channels),
-                	ReLU(),
-                	Linear(hidden_channels, hidden_channels),
-                	ReLU(),
-                	Linear(hidden_channels, latent_channels)))"""  # Using the pytorch-geometric implementation, same result
+                #lay = EdgeConv(Sequential(Linear(2*in_channels, hidden_channels),ReLU(),Linear(hidden_channels, hidden_channels),ReLU(),Linear(hidden_channels, latent_channels)))  # Using the pytorch-geometric implementation, same result
 
             elif use_model=="EdgePoint":
                 lay = EdgePointLayer(in_channels, hidden_channels, latent_channels)
 
             elif use_model=="MetaNet":
-                #print("inchanels",in_channels)
                 if use_model=="MetaNet" and i==2:   in_channels = 610
                 #lay = MetaLayer(node_model=NodeModel(in_channels, hidden_channels, latent_channels), global_model=GlobalModel(in_channels, hidden_channels, latent_channels))
                 lay = MetaLayer(node_model=NodeModel(in_channels, hidden_channels, latent_channels))
@@ -257,8 +252,7 @@ class ModelGNN(torch.nn.Module):
             layers.append(lay)
             in_channels = latent_channels
             if use_model=="MetaNet":    in_channels = (node_features+latent_channels*3+2)
-            #if use_model=="MetaNet":    in_channels = (in_channels+latent_channels*3+2)
-            #print("inchanels2",in_channels, latent_channels)
+
 
         self.layers = ModuleList(layers)
 
@@ -277,28 +271,14 @@ class ModelGNN(torch.nn.Module):
         self.loop = loop
         if use_model=="EdgeNet":    self.loop = False
         self.namemodel = use_model
-        #print("wwiiwi",(node_features+latent_channels*3+2)*3)
 
     def forward(self, data):
 
         x, pos, batch, u = data.x, data.pos, data.batch, data.u
-        #pos = x[:,:3]
 
         # Get edges using positions by computing the kNNs or the neighbors within a radius
         #edge_index = knn_graph(pos, k=self.k_nn, batch=batch, loop=self.loop)
         edge_index = radius_graph(pos, r=self.k_nn, batch=batch, loop=self.loop)
-
-        """print(x.shape)
-        print(u)
-        print(batch)
-        print(u[batch])
-        print(batch.shape, u.shape, u[batch].shape)"""
-
-        """uv = []
-        for i in batch:
-            uv.append(batch.count(i))
-        print(uv)"""
-
 
         # Start bipartite message passing
         for layer in self.layers:
@@ -313,18 +293,13 @@ class ModelGNN(torch.nn.Module):
             self.h = x
             x = x.relu()
 
-        #print("prepool", x.shape, u.shape)
-        #if self.namemodel=="MetaNet":   x = u
 
         # Mix different global pooling layers
-        addpool = global_add_pool(x, batch)
+        addpool = global_add_pool(x, batch) # [num_examples, hidden_channels]
         meanpool = global_mean_pool(x, batch)
         maxpool = global_max_pool(x, batch)
         #self.pooled = torch.cat([addpool, meanpool, maxpool], dim=1)
         self.pooled = torch.cat([addpool, meanpool, maxpool, u], dim=1)
-        #self.pooled = global_mean_pool(x, batch)  # [num_examples, hidden_channels]
-
-        #print("pooled",self.pooled.shape)
 
         # Final linear layer
         return self.lin(self.pooled)

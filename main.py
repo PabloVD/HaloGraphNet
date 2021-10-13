@@ -12,14 +12,20 @@ from Source.training import *
 from Source.plotting import *
 from Source.load_data import *
 
+def changesuite(suite):
+    if suite=="IllustrisTNG":
+        newsuite = "SIMBA"
+    elif suite=="SIMBA":
+        newsuite = "IllustrisTNG"
+    return newsuite
 
 # Main routine to train the neural net
 def main(params, verbose = True):
 
-    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simtype, simset, n_sims = params
+    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
 
     # Load data and create dataset
-    dataset, node_features = create_dataset(simtype, simset, n_sims)
+    dataset, node_features = create_dataset(simsuite, simset, n_sims)
 
     # Split dataset among training, validation and testing datasets
     train_loader, valid_loader, test_loader = split_datasets(dataset)
@@ -40,9 +46,11 @@ def main(params, verbose = True):
 
     # Test the net
     if verbose: print("\nTesting!\n")
-    if training==False: params[7]="IllustrisTNG"   # change for loading the model
+
+    # If test in other suite, change the suite for loading the model
+    if training==False: params[7]=changesuite(simsuite)   # change for loading the model
     state_dict = torch.load("Models/"+namemodel(params), map_location=device)
-    if training==False: params[7]="SIMBA"   # change after loading the model
+    if training==False: params[7]=simsuite   # change after loading the model
     model.load_state_dict(state_dict)
     test_loss, rel_err = test(test_loader, model, torch.nn.MSELoss(), params, message_reg=sym_reg)
     if verbose: print("Test Loss: {:.2e}, Relative error: {:.2e}".format(test_loss, rel_err))

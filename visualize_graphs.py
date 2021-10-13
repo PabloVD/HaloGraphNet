@@ -28,10 +28,10 @@ def visualize_points_3D(data, ind, edge_index=None):
     fig.savefig("Plots/visualize_graph_"+str(ind), bbox_inches='tight', dpi=300)
 
 # Main routine to train the neural net
-def display_graphs(simtype, simset, n_sims, k_nn):
+def display_graphs(simsuite, simset, n_sims, k_nn):
 
     # Load data and create dataset
-    dataset, node_features = create_dataset(simtype, simset, n_sims)
+    dataset, node_features = create_dataset(simsuite, simset, n_sims)
 
     for i, data in enumerate(dataset[:20]):
         if (i%2)==0:
@@ -47,12 +47,12 @@ time_ini = time.time()
 # Number of nearest neighbors in kNN / radius of NNs
 k_nn = 0.07
 # Simulation suite, choose between "IllustrisTNG" and "SIMBA"
-simtype = "IllustrisTNG"
+simsuite = "IllustrisTNG"
 # Simulation set, choose between "CV" and "LH"
 simset = "CV"
 # Number of simulations considered, maximum 27 for CV and 1000 for LH
 n_sims = 1
 
-display_graphs(simtype, simset, n_sims, k_nn)
+display_graphs(simsuite, simset, n_sims, k_nn)
 
 print("Finished. Time elapsed:",datetime.timedelta(seconds=time.time()-time_ini))

@@ -1,12 +1,14 @@
 from Source.constants import *
 #from pysr import pysr, best, best_tex, get_hof
 from torch_geometric.transforms import Compose, RandomRotate
+from scipy.spatial.transform import Rotation as Rot
 
-random_rotate = Compose([
+
+"""random_rotate = Compose([
     RandomRotate(degrees=180, axis=0),
     RandomRotate(degrees=180, axis=1),
     RandomRotate(degrees=180, axis=2),
-])
+])"""
 
 
 # use GPUs if available
@@ -24,7 +26,11 @@ def train(loader, model, optimizer, criterion):
     loss_tot = 0
     for data in loader:  # Iterate in batches over the training dataset.
 
-        random_rotate(data)
+        # Rotate randomly for data augmentation
+        #random_rotate(data)
+        rotmat = Rot.random().as_matrix()
+        data.pos = torch.tensor([rotmat.dot(p) for p in data.pos], dtype=torch.float32)
+        data.x[:,:3] = torch.tensor([rotmat.dot(p) for p in data.x[:,:3]], dtype=torch.float32)
 
         data.to(device)
         optimizer.zero_grad()  # Clear gradients.
@@ -155,7 +161,7 @@ def test(loader, model, criterion, params, message_reg=0):
 # Training procedure
 def training_routine(model, train_loader, test_loader, params, verbose=True):
 
-    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simtype, simset, n_sims = params
+    use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     criterion = torch.nn.MSELoss()
