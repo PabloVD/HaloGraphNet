@@ -69,7 +69,7 @@ def plot_out_true_scatter(params):
     #err = np.abs(trues - outputs)/trues
     #plt.title(model+", Relative error: {:.2e}".format(err.mean()))
     #plt.title(params[0]+r", $R^2$={:.2f}".format(r2))
-    plt.title(r"$log_{10}\left[M_h/(10^{10} M_\odot/h) \right]$, \t"+"$R^2$={:.2f}".format(r2))
+    plt.title(r"$log_{10}\left[M_h/(10^{10} M_\odot/h) \right]$"+", \t"+"$R^2$={:.2f}".format(r2))
     #plt.ylabel(r"log$_{10}\left(M_{h,infer}/(10^{10} M_\odot)\right)$")
     #plt.ylabel(r"log$_{10}\left(M_{h,infer}/(10^{10} M_\odot)\right)$ - log$_{10}\left(M_{h,truth}/(10^{10} M_\odot)\right)$")
     #plt.xlabel(r"log$_{10}\left(M_{h,truth}/(10^{10} M_\odot)\right)$")
