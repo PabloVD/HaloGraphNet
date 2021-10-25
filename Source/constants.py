@@ -35,3 +35,16 @@ l1_reg = 0.01
 def namemodel(params):
     use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
     return simsuite+"_"+simset+"_model_"+use_model+"_lr_{:.2e}_weightdecay_{:.2e}_layers_{:d}_knn_{:.2e}_epochs_{:d}".format(learning_rate, weight_decay, n_layers, k_nn, n_epochs)
+
+# Change to the other simulation suite
+def changesuite(suite):
+    if suite=="IllustrisTNG":
+        newsuite = "SIMBA"
+    elif suite=="SIMBA":
+        newsuite = "IllustrisTNG"
+    return newsuite
+
+# Choose color depending on the simulation suite
+def colorsuite(suite):
+    if suite=="IllustrisTNG":   return "purple"
+    elif suite=="SIMBA":            return "deepskyblue"

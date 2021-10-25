@@ -12,15 +12,10 @@ from Source.training import *
 from Source.plotting import *
 from Source.load_data import *
 
-def changesuite(suite):
-    if suite=="IllustrisTNG":
-        newsuite = "SIMBA"
-    elif suite=="SIMBA":
-        newsuite = "IllustrisTNG"
-    return newsuite
 
 # Main routine to train the neural net
-def main(params, verbose = True):
+# If testsuite==True, it takes a model already pretrained in the other suite and tests it in the selected one
+def main(params, verbose = True, testsuite = False):
 
     use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
 
@@ -48,10 +43,14 @@ def main(params, verbose = True):
     if verbose: print("\nTesting!\n")
 
     # If test in other suite, change the suite for loading the model
-    if training==False: params[7]=changesuite(simsuite)   # change for loading the model
+    if testsuite==True: params[7]=changesuite(simsuite)   # change for loading the model
+
+    # Load the trained model
     state_dict = torch.load("Models/"+namemodel(params), map_location=device)
-    if training==False: params[7]=simsuite   # change after loading the model
     model.load_state_dict(state_dict)
+
+    if testsuite==True: params[7]=simsuite   # change after loading the model
+
     test_loss, rel_err = test(test_loader, model, torch.nn.MSELoss(), params, message_reg=sym_reg)
     if verbose: print("Test Loss: {:.2e}, Relative error: {:.2e}".format(test_loss, rel_err))
 
@@ -60,7 +59,7 @@ def main(params, verbose = True):
         plot_losses(train_losses, valid_losses, test_loss, rel_err, params)
 
     # Plot true vs predicted halo masses
-    plot_out_true_scatter(params)
+    plot_out_true_scatter(params, testsuite)
 
     #if training:
     #    return np.amin(valid_losses)

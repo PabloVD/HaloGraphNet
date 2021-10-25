@@ -159,7 +159,7 @@ def predict_halomass(galaxies, simsuite, verbose=True, random_rotation=False):
     out = model(graph)
     #print(out)
 
-    mass, error = 10.**(out[0,0].item())/hred, 10.**(out[0,1].item())
+    mass, error = 10.**(out[0,0].item())/hred, 10.**(np.abs(out[0,1].item()))
     massmin, massplus = mass/error, mass*error
     massmean, errmin, errplus = mass/1.e2, (mass -massmin)/1.e2, (massplus-mass)/1.e2 # Factor 1.e2 for 1e12Msun units
     if verbose:
@@ -272,38 +272,40 @@ exit()"""
 
 #--- MAIN ---#
 
-"""
+if __name__=="__main__":
 
-for suite in ["SIMBA", "IllustrisTNG"]:
-    print("\n"+suite+"\n")
-    halomass_with_rotations(MW_gals, suite)
-    print("\n")
-    halomass_with_rotations(M31_gals, suite)
-    print("\n")
-    #halomass_with_rotations(M31_noTri, suite)
-    #print("\n")
+    """
 
-"""
+    for suite in ["SIMBA", "IllustrisTNG"]:
+        print("\n"+suite+"\n")
+        halomass_with_rotations(MW_gals, suite)
+        print("\n")
+        halomass_with_rotations(M31_gals, suite)
+        print("\n")
+        #halomass_with_rotations(M31_noTri, suite)
+        #print("\n")
 
-
-
-mass_as_numsats(MW_gals, "MW", "Milky Way")
-mass_as_numsats(M31_gals, "M31", "M31 (with M33)")
-#mass_as_numsats(M31_noTri, "M31", "M31 (without M33)")
+    """
 
 
-exit()
 
-# Visualize Local Group
-#visualize_galaxies(MW_gals, M31_gals)
+    mass_as_numsats(MW_gals, "MW", "Milky Way")
+    mass_as_numsats(M31_gals, "M31", "M31 (with M33)")
+    #mass_as_numsats(M31_noTri, "M31", "M31 (without M33)")
 
-for suite in ["SIMBA", "IllustrisTNG"]:
 
-    # Milky Way halo
-    predict_halomass(MW_gals, suite)
+    exit()
 
-    # Andromeda halo
-    predict_halomass(M31_gals, suite)
+    # Visualize Local Group
+    #visualize_galaxies(MW_gals, M31_gals)
 
-    # Andromeda halo (excluding the Triangulum galaxy)
-    #predict_halomass(M31_noTri, suite)
+    for suite in ["SIMBA", "IllustrisTNG"]:
+
+        # Milky Way halo
+        predict_halomass(MW_gals, suite)
+
+        # Andromeda halo
+        predict_halomass(M31_gals, suite)
+
+        # Andromeda halo (excluding the Triangulum galaxy)
+        #predict_halomass(M31_noTri, suite)

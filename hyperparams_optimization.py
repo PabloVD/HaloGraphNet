@@ -10,8 +10,8 @@ from optuna.visualization import plot_optimization_history, plot_contour, plot_p
 
 # Simulation type
 simsuite = "IllustrisTNG"
-simset = "CV"
-n_sims = 27
+simset = "LH"
+n_sims = 1000
 
 # Objective function to minimize
 def objective(trial):
@@ -61,7 +61,8 @@ if __name__ == "__main__":
             os.mkdir(path)
 
     # Optuna parameters
-    storage = "sqlite:///home/pdomingo/CamelsGNN/GNNMaster/optuna_"+simsuite+"_"+simset
+    storage = "sqlite:///"+os.getcwd()+"/optuna_"+simsuite+"_"+simset
+    #storage = "sqlite:///optuna_"+simsuite+"_"+simset
     study_name = "gnn"
     n_trials   = 100
 

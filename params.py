@@ -9,13 +9,13 @@ use_model = "EdgeNet"
 #use_model = "MetaNet"
 
 # Learning rate
-learning_rate = 1.7011179375158516e-05
+learning_rate = 0.00010992156998246198
 # Weight decay
-weight_decay = 4.2340764325861004e-07
+weight_decay = 3.840148429018425e-07
 # Number of layers of each graph layer
 n_layers = 1
 # Number of nearest neighbors in kNN / radius of NNs
-k_nn = 0.0640507737116604
+k_nn = 0.14233421449747316
 
 # Number of epochs
 n_epochs = 150

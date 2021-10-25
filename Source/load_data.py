@@ -74,6 +74,22 @@ def split_datasets(dataset):
 
     return train_loader, valid_loader, test_loader
 
+
+# Correct periodic boundary effects
+# Some halo close to a boundary could have subhalos at the other extreme of the box, due to periodic boundary conditions
+# Just add or substract a length boxe in such cases
+def correct_boundary(pos, boxlength=1.):
+
+    for i, pos_i in enumerate(pos):
+        for j, coord in enumerate(pos_i):
+            if coord > boxlength/2.:
+                pos[i,j] -= boxlength
+            elif -coord > boxlength/2.:
+                pos[i,j] += boxlength
+
+    return pos
+
+
 # Load data and create the dataset
 # simsuite: simulation suite, either "IllustrisTNG" or "SIMBA"
 # simset: set of simulations:
@@ -101,19 +117,22 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
             # Select subhalos within a halo with index ind
             tab_halo = tab[tab[:,0]==ind][:,1:]
 
-            # Write the subhalo positions and velocities as the relative position and velocity to the host halo
-            tab_halo[:,0:3] -= HaloPos[ind]
-            tab_halo[:,-3:] -= HaloVel[ind]
-
-            # If use velocity, compute the modulus of the velocities and create a new table with these values
-            if use_vel:
-                subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
-                newtab = np.column_stack((tab_halo[:,:-3], subhalovel))
-            else:
-                newtab = tab_halo[:,:-3]
-
             # Consider only halos with more than one satellite
             if tab_halo.shape[0]>1:
+
+                # Write the subhalo positions and velocities as the relative position and velocity to the host halo
+                tab_halo[:,0:3] -= HaloPos[ind]
+                tab_halo[:,-3:] -= HaloVel[ind]
+
+                # Correct periodic boundary effects
+                tab_halo[:,:3] = correct_boundary(tab_halo[:,:3])
+
+                # If use velocity, compute the modulus of the velocities and create a new table with these values
+                if use_vel:
+                    subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
+                    newtab = np.column_stack((tab_halo[:,:-3], subhalovel))
+                else:
+                    newtab = tab_halo[:,:-3]
 
                 # Take as global quantities of the halo the number of subhalos and the total stellar mass
                 u = np.zeros((1,2), dtype=np.float32)
