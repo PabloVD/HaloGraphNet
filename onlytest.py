@@ -1,3 +1,9 @@
+#------------------------------------------------
+# Test a model already trained
+# Author: Pablo Villanueva Domingo
+# Last update: 5/11/21
+#------------------------------------------------
+
 from main import *
 from params import params
 

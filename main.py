@@ -1,10 +1,8 @@
-#-----------
-# See for explanation of different field in Illustris files:
-# https://www.tng-project.org/data/docs/specifications/#sec2a
-# Example use h5py: https://github.com/franciscovillaescusa/Pylians3/blob/master/documentation/miscellaneous.md#h5py_P
-#-----------
-
-# change namemodel()
+#----------------------------------------------------
+# Main routine for training and testing GNN models
+# Author: Pablo Villanueva Domingo
+# Last update: 5/11/21
+#----------------------------------------------------
 
 import time, datetime, psutil
 from Source.networks import *

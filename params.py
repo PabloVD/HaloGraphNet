@@ -1,4 +1,8 @@
-
+#------------------------------------------------
+# Choose parameters to train the networks
+# Author: Pablo Villanueva Domingo
+# Last update: 5/11/21
+#------------------------------------------------
 
 # Choose the GNN architecture between "DeepSet", "GCN", "EdgeNet", "PointNet", "MetaNet"
 #use_model = "DeepSet"

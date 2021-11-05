@@ -12,6 +12,9 @@ random.seed(12345)
 # Root path for simulations
 simpathroot = "/projects/QUIJOTE/CAMELS/Sims/"
 
+# Reduced Hubble constant
+hred = 0.7
+
 # Box size in comoving kpc/h
 boxsize = 25.e3
 

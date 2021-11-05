@@ -40,6 +40,10 @@ def plot_out_true_scatter(params, testsuite = False):
     # Use log(M) rather than log(M/1e10)
     outputs += 10.; trues+=10.;
 
+    cond_success_1sig, cond_success_2sig = np.abs(outputs-trues)<=np.abs(errors), np.abs(outputs-trues)<=2.*np.abs(errors)
+    tot_points = outputs.shape[0]
+    successes1sig, successes2sig = outputs[cond_success_1sig].shape[0], outputs[cond_success_2sig].shape[0]
+
     # Compute the linear correlation coefficient
     r2 = r2_score(trues,outputs)
     err_rel = np.mean(np.abs((trues - outputs)/(trues)), axis=0)
@@ -50,6 +54,7 @@ def plot_out_true_scatter(params, testsuite = False):
     #chi2 = chi2s[np.abs(errors)>0.01].mean()    # Remove some outliers which make explode the chi2
     chi2 = chi2s[chi2s<1.e4].mean()    # Remove some outliers which make explode the chi2
     print("R^2={:.2f}, Relative error={:.2e}, Chi2={:.2f}".format(r2, err_rel, chi2))
+    print("A fraction of succeses of", successes1sig/tot_points, "at 1 sigma,", successes2sig/tot_points, "at 2 sigmas")
 
 
     # Sort by true value
@@ -121,8 +126,10 @@ def plot_out_true_scatter(params, testsuite = False):
     #plt.xlabel(r"log$_{10}\left(M_{h,truth}/(10^{10} M_\odot)\right)$")
     axscat.set_xlim([truemin, truemax])
     axscat.set_ylim([-1.,1.])
-    axscat.set_ylabel(r"Prediction - Truth")
-    axscat.set_xlabel(r"Truth")
+    #axscat.set_ylabel(r"Prediction - Truth")
+    #axscat.set_xlabel(r"Truth")
+    plt.ylabel(r"log$_{10}\left[M_{h,infer}/(M_\odot/h)\right]$ - log$_{10}\left[M_{h,truth}/(M_\odot/h)\right]$")
+    plt.xlabel(r"log$_{10}\left[M_{h,truth}/(M_\odot/h)\right]$")
     axscat.yaxis.set_major_locator(MultipleLocator(0.2))
     axscat.grid()
 
@@ -138,37 +145,27 @@ def plot_out_true_scatter(params, testsuite = False):
     figscat.savefig("Plots/"+namefig+".png", bbox_inches='tight', dpi=300)
     plt.close(figscat)
 
-# Visualize saliency graphs
-def visualize_points_3D(datax, ind, colors="blue", edge_index=None):
+# Visualization routine
+def visualize_points(data, ind, edge_index=None, index=None):
 
-    datax.detach().cpu().numpy()
-    pos = datax[:,:3]*boxsize
-    massstar = datax[:,3]
-
-    fig = plt.figure(figsize=(9, 9))
-    ax = fig.add_subplot(projection ="3d")
-
+    pos = data.x[:,:2]
+    fig = plt.figure(figsize=(4, 4))
     if edge_index is not None:
         for (src, dst) in edge_index.t().tolist():
             src = pos[src].tolist()
             dst = pos[dst].tolist()
-            ax.plot([src[0], dst[0]], [src[1], dst[1]], zs=[src[2], dst[2]], linewidth=0.05, color='black')
+            plt.plot([src[0], dst[0]], [src[1], dst[1]], linewidth=1, color='black')
+    if index is None:
+        plt.scatter(pos[:, 0], pos[:, 1], s=50, zorder=1000)
+    else:
+       mask = torch.zeros(pos.size(0), dtype=torch.bool)
+       mask[index] = True
+       plt.scatter(pos[~mask, 0], pos[~mask, 1], s=50, color='lightgray', zorder=1000)
+       plt.scatter(pos[mask, 0], pos[mask, 1], s=50, zorder=1000)
 
-    sizes = 10.**(massstar+2.)
-    scat = ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=sizes, c=colors, zorder=1000, vmin=0., vmax=0.16)
-    colbar = plt.colorbar(scat, ax=ax, fraction=0.04, pad=0.1)
-    colbar.ax.set_ylabel("Saliency")#, loc="top")# rotation=270)
-    #ax.scatter(0., 0., 0., s=10., c="red", zorder=10000)
-    ax.set_xlabel(r"$x$ [kpc/h]")
-    ax.set_ylabel(r"$y$ [kpc/h]")
-    ax.set_zlabel(r"$z$ [kpc/h]")
-    #ax.xaxis.set_major_locator(MultipleLocator(100))
-    #ax.yaxis.set_major_locator(MultipleLocator(100))
-    #ax.zaxis.set_major_locator(MultipleLocator(100))
-
-    #plt.axis('off')
-    fig.savefig("Plots/visualize_graph_"+str(ind)+".pdf", bbox_inches='tight', dpi=300)
-    plt.close(fig)
+    plt.axis('off')
+    fig.savefig("Plots/visualize_graph_"+str(ind), bbox_inches='tight', dpi=300)
+    #plt.show()
 
 # Plot total stellar mass versus halo mass
 def scat_plot(shmasses, hmasses, simsuite, simset):

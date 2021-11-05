@@ -10,8 +10,8 @@ from optuna.visualization import plot_optimization_history, plot_contour, plot_p
 
 # Simulation type
 simsuite = "IllustrisTNG"
-simset = "LH"
-n_sims = 1000
+simset = "CV"
+n_sims = 27
 
 # Objective function to minimize
 def objective(trial):

@@ -1,41 +1,59 @@
 #-----------
-# See for explanation of different field in Illustris files:
-# https://www.tng-project.org/data/docs/specifications/#sec2a
-# Example use h5py: https://github.com/franciscovillaescusa/Pylians3/blob/master/documentation/miscellaneous.md#h5py_P
+# Script for model interpretability
+# Author: Pablo Villanueva Domingo
+# Last update: 5/11/21
 #-----------
-
-# change namemodel()
 
 import time, datetime, psutil
 from Source.networks import *
 from Source.training import *
-from Source.plotting import *
 from Source.load_data import *
 from captum.attr import IntegratedGradients, Saliency
 from matplotlib.ticker import MultipleLocator
 import matplotlib as mpl
 mpl.rcParams.update({'font.size': 12})
 
-
+# Captum method for interpretability (see captum documentation)
 method = "saliency"
 #method = "intgradients"
 
-def changesuite(suite):
-    if suite=="IllustrisTNG":
-        newsuite = "SIMBA"
-    elif suite=="SIMBA":
-        newsuite = "IllustrisTNG"
-    return newsuite
+#--- FUNCTIONS ---#
 
+# Write model function in the appropriate format for captum
 def model_forward(datax, model, data):
     u=torch.tensor([[datax.shape[0], torch.log10(torch.sum(10.**datax[:,3]))]], dtype=torch.float)
-    #if batch==0:
-    #    batch = torch.tensor(np.zeros(datax.shape[0]), dtype=torch.int64)
-    #graph = Data(x=datax, pos=datax[:,:3], u=u, batch=batch)
     graph = Data(x=datax, pos=data.pos, u=data.u, batch=data.batch)
     return model(graph)
 
+# Visualization routine
+def visualize_points_3D(datax, ind, colors="blue", edge_index=None):
 
+    datax.detach().cpu().numpy()
+    pos = datax[:,:3]*boxsize
+    massstar = datax[:,3]
+
+    fig = plt.figure(figsize=(9, 9))
+    ax = fig.add_subplot(projection ="3d")
+
+    if edge_index is not None:
+        for (src, dst) in edge_index.t().tolist():
+            src = pos[src].tolist()
+            dst = pos[dst].tolist()
+            ax.plot([src[0], dst[0]], [src[1], dst[1]], zs=[src[2], dst[2]], linewidth=0.05, color='grey', alpha=0.7)
+
+    sizes = 10.**(massstar+2.)
+    scat = ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=sizes, c=colors, zorder=1000, vmin=0., vmax=0.16)
+    colbar = plt.colorbar(scat, ax=ax, fraction=0.04, pad=0.1)
+    colbar.ax.set_ylabel("Saliency")#, loc="top")# rotation=270)
+    ax.set_xlabel(r"$x$ [kpc/h]")
+    ax.set_ylabel(r"$y$ [kpc/h]")
+    ax.set_zlabel(r"$z$ [kpc/h]")
+    #ax.xaxis.set_major_locator(MultipleLocator(100))
+    #ax.yaxis.set_major_locator(MultipleLocator(100))
+    #ax.zaxis.set_major_locator(MultipleLocator(100))
+
+    fig.savefig("Plots/visualize_graph_"+str(ind)+".pdf", bbox_inches='tight', dpi=300)
+    plt.close(fig)
 
 # Plot average feature importances
 def feature_importance_plot(importances, feature_names, method):
@@ -105,27 +123,20 @@ def captum_routine(model, dataloader, radiusneigh):
                     nhalos_compl+=1
                 nhalos+=1
 
-                if err[ibatch]<0.015:
+                if err[ibatch]<0.015 and datagraph.shape[0]>=10:
+                #if datagraph.shape[0]>=10 and datagraph.shape[0]<15:
+                    #print("Ind", ibatch, "Error",err[ibatch])
 
-                    if datagraph.shape[0]>=10:
+                    visualize_points_3D(datagraph, ibatch, atr_col[indexes], edge_index)
 
-                    #if datagraph.shape[0]>=10 and datagraph.shape[0]<15:
 
-                        visualize_points_3D(datagraph, ibatch, atr_col[indexes], edge_index)
-
-                """dists=np.sqrt(np.sum(data.pos[indexes].detach().cpu().numpy()**2.,axis=1))*boxsize
-                for d in dists:
-                    if d>3e3:
-                        edge_index = radius_graph(datagraph[:,:3], r=k_nn)
-
-                        visualize_points_3D(datagraph, ibatch, atr_col[indexes], edge_index)"""
 
     print("Number of graphs:", nhalos, "out of which ", nhalos_compl, "are complete. Fraction:", float(nhalos_compl)/float(nhalos))
 
     axdist.set_ylabel("Saliency")
     axdist.set_xlabel("Distance [kpc/h]")
-    #axdist.set_xscale("log")
-    #axdist.set_xlim([0.,1.e3])
+    axdist.set_xscale("log")
+    axdist.set_yscale("log")
     figdist.savefig("Plots/distance_attribute_"+method+".pdf")
     plt.close(figdist)
 
@@ -137,10 +148,8 @@ def captum_routine(model, dataloader, radiusneigh):
     feature_importance_plot(importances, feature_names, method)
 
 
-
-
-# Main routine to train the neural net
-def main(params, verbose = True):
+# Routine to load the trained model and examine its interpretability
+def captum_main(params, verbose = True):
 
     use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
 
@@ -162,9 +171,6 @@ def main(params, verbose = True):
 
 
 
-
-
-
 #--- MAIN ---#
 
 if __name__ == "__main__":
@@ -178,6 +184,6 @@ if __name__ == "__main__":
     # Load default parameters
     from params import params
 
-    main(params)
+    captum_main(params)
 
     print("Finished. Time elapsed:",datetime.timedelta(seconds=time.time()-time_ini))

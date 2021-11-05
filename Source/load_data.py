@@ -1,8 +1,13 @@
+#----------------------------------------------------------------------
+# Script for loading CAMELS data
+# Author: Pablo Villanueva Domingo
+# Last update: 5/11/21
+#----------------------------------------------------------------------
+
 import h5py
 from torch_geometric.data import Data, DataLoader
 from Source.constants import *
 from Source.plotting import *
-
 
 Nstar_th = 10
 radnorm = 8.    # ad hoc normalization for half-mass radius
@@ -11,6 +16,7 @@ velnorm = 100.  # ad hoc normalization for velocity
 use_hmR = 1     # 1 for using the half-mass radius as feature
 use_vel = 1     # 1 for using subhalo velocity as feature
 only_positions = 0  # 1 for using only positions as features
+galcen_frame = 0    # 1 for writing positions and velocities in the central galaxy rest frame
 
 # Import h5py file to construct the general dataset
 # See for explanation of different field in Illustris files: https://www.tng-project.org/data/docs/specifications/#sec2a
@@ -31,6 +37,7 @@ def general_tab(path):
     #HaloMass = f["Group/GroupMass"][:]
     HaloMass = f["Group/Group_M_Crit200"][:]
     GroupPos = f["Group/GroupPos"][:]/boxsize
+    #GroupPos = f["Group/GroupCM"][:]/boxsize
     GroupVel = f["Group/GroupVel"][:]/velnorm
 
     # Neglect halos with zero mass
@@ -97,12 +104,15 @@ def correct_boundary(pos, boxlength=1.):
 #   CV: Use simulations with fiducial cosmological and astrophysical parameters, but different random seeds (27 simulations total)
 # n_sims: number of simulations, maximum 27 for CV and 1000 for LH
 def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
+    simset = "LH"; n_sims = 1000
 
     simpath = simpathroot + simsuite + "/"+simset+"_"
     print("Using "+simsuite+" simulation suite, "+simset+" set, "+str(n_sims)+" simulations.")
 
     dataset = []
     subs = 0
+
+    #relerrorvels, velCM, velHalo = [], [], []
 
     for sim in range(n_sims):
 
@@ -120,16 +130,26 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
             # Consider only halos with more than one satellite
             if tab_halo.shape[0]>1:
 
-                # Write the subhalo positions and velocities as the relative position and velocity to the host halo
-                tab_halo[:,0:3] -= HaloPos[ind]
-                tab_halo[:,-3:] -= HaloVel[ind]
+                #velCMstar = np.dot(np.transpose(tab_halo[:,-3:]),tab_halo[:,3])/np.sum(tab_halo[:,3])
+
+                # If galcen_frame==1, write positions and velocities in the rest frame of the central galaxy
+                if galcen_frame:
+                    tab_halo[:,:3] -= tab_halo[0,:3]
+                    tab_halo[:,-3:] -= tab_halo[0,-3:]
+                else:
+                    # Write the positions and velocities as the relative position and velocity to the host halo
+                    tab_halo[:,0:3] -= HaloPos[ind]
+                    tab_halo[:,-3:] -= HaloVel[ind]
 
                 # Correct periodic boundary effects
                 tab_halo[:,:3] = correct_boundary(tab_halo[:,:3])
 
                 # If use velocity, compute the modulus of the velocities and create a new table with these values
                 if use_vel:
-                    subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
+                    if galcen_frame:
+                        subhalovel = np.log10(1.+np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
+                    else:
+                        subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
                     newtab = np.column_stack((tab_halo[:,:-3], subhalovel))
                 else:
                     newtab = tab_halo[:,:-3]
@@ -150,6 +170,10 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
                 dataset.append(graph)
 
     print("Total number of halos", len(dataset), "Total number of subhalos", subs)
+    """print("VelCM rel",np.array(relerrorvels).mean())
+    velCM, velHalo = np.array(velCM), np.array(velHalo)
+    print(np.mean(velCM.mean(0)), np.mean(velHalo.mean(0)))"""
+    #print(np.array(errsposhalo).mean())
 
     # Number of features
     node_features = newtab.shape[1]

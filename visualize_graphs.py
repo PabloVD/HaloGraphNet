@@ -9,6 +9,23 @@ from Source.networks import *
 from Source.plotting import *
 from Source.load_data import *
 
+# Visualization routine
+def visualize_points_3D(data, ind, edge_index=None):
+
+    pos = data.x[:,:3]
+    fig = plt.figure(figsize=(4, 4))
+    ax = fig.add_subplot(projection ="3d")
+
+    if edge_index is not None:
+        for (src, dst) in edge_index.t().tolist():
+            src = pos[src].tolist()
+            dst = pos[dst].tolist()
+            ax.plot([src[0], dst[0]], [src[1], dst[1]], zs=[src[2], dst[2]], linewidth=0.1, color='black')
+
+    ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=50, zorder=1000)
+
+    #plt.axis('off')
+    fig.savefig("Plots/visualize_graph_"+str(ind), bbox_inches='tight', dpi=300)
 
 # Main routine to train the neural net
 def display_graphs(simsuite, simset, n_sims, k_nn):
