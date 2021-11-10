@@ -11,6 +11,10 @@ from Hyperparameters.params_TNG_CV import params
 
 time_ini = time.time()
 
+for path in ["Plots", "Models", "Outputs"]:
+        if not os.path.exists(path):
+            os.mkdir(path)
+
 # Test a pretrained model
 training = False
 params[6] = training

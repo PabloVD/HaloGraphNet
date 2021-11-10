@@ -19,8 +19,8 @@ galcen_frame = 0    # 1 for writing positions and velocities in the central gala
 #--- NORMALIZATION ---#
 
 Nstar_th = 10   # Minimum number of stellar particles required to consider a galaxy
-radnorm = 8.    # ad hoc normalization for half-mass radius
-velnorm = 1.  # ad hoc normalization for velocity
+radnorm = 8.    # Ad hoc normalization for half-mass radius
+velnorm = 100.  # Ad hoc normalization for velocity. Use velnorm=1. for galcen_frame=1
 
 #--- LOADING DATA ROUTINES ---#
 
@@ -157,7 +157,7 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
                 # If use velocity, compute the modulus of the velocities and create a new table with these values
                 if use_vel:
                     if galcen_frame:
-                        subhalovel = np.log10(1.+np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
+                        subhalovel = np.log10(1.+np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))   # for this, use velnorm = 1. better
                     else:
                         subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))  # use this way in case you normalize velocities
                     newtab = np.column_stack((tab_halo[:,:-3], subhalovel))
