@@ -1,19 +1,26 @@
+#----------------------------------------------------------------------
+# List of constants and some common functions
+# Author: Pablo Villanueva Domingo
+# Last update: 10/11/21
+#----------------------------------------------------------------------
+
 import numpy as np
 import torch
 import os
 import random
 
+# Random seeds
 torch.manual_seed(12345)
 np.random.seed(12345)
 random.seed(12345)
 
-#--- PARAMETERS ---#
-
-# Root path for simulations
-simpathroot = "/projects/QUIJOTE/CAMELS/Sims/"
+#--- PARAMETERS AND CONSTANTS ---#
 
 # Reduced Hubble constant
 hred = 0.7
+
+# Root path for simulations
+simpathroot = "/projects/QUIJOTE/CAMELS/Sims/"
 
 # Box size in comoving kpc/h
 boxsize = 25.e3
@@ -33,13 +40,14 @@ use_l1 = 0
 # Weight of the message L1 regularization in the total loss respect to the standard loss (used for symbolic regression)
 l1_reg = 0.01
 
+#--- FUNCTIONS ---#
 
 # Name of the model and hyperparameters
 def namemodel(params):
     use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
     return simsuite+"_"+simset+"_model_"+use_model+"_lr_{:.2e}_weightdecay_{:.2e}_layers_{:d}_knn_{:.2e}_epochs_{:d}".format(learning_rate, weight_decay, n_layers, k_nn, n_epochs)
 
-# Change to the other simulation suite
+# Change to the other CAMELS simulation suite
 def changesuite(suite):
     if suite=="IllustrisTNG":
         newsuite = "SIMBA"
@@ -47,7 +55,7 @@ def changesuite(suite):
         newsuite = "IllustrisTNG"
     return newsuite
 
-# Choose color depending on the simulation suite
+# Choose color depending on the CAMELS simulation suite
 def colorsuite(suite):
     if suite=="IllustrisTNG":   return "purple"
     elif suite=="SIMBA":            return "deepskyblue"

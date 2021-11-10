@@ -1,8 +1,8 @@
-#-----------
+#--------------------------------------------
 # Script for model interpretability
 # Author: Pablo Villanueva Domingo
-# Last update: 5/11/21
-#-----------
+# Last update: 10/11/21
+#--------------------------------------------
 
 import time, datetime, psutil
 from Source.networks import *
@@ -98,7 +98,7 @@ def captum_routine(model, dataloader, radiusneigh):
         # Scatter plot of saliency vs distance to the center
         sizes = 10.**(data.x[:,3].detach().cpu().numpy()+2.)
         indxs = np.argwhere(dists>0.).reshape(-1)
-        axdist.scatter(dists[indxs], atr_col[indxs], s=sizes[indxs], c="blue", alpha=0.3)
+        axdist.scatter(dists[indxs], atr_col[indxs], s=sizes[indxs]*0.2, c="blue", alpha=0.3)
         #axdist.scatter(dists[indxs], sizes[indxs], c=atr_col[indxs], alpha=0.5, vmin=0., vmax=0.3)
 
         out = model(data)
@@ -135,8 +135,8 @@ def captum_routine(model, dataloader, radiusneigh):
 
     axdist.set_ylabel("Saliency")
     axdist.set_xlabel("Distance [kpc/h]")
-    axdist.set_xscale("log")
-    axdist.set_yscale("log")
+    #axdist.set_xscale("log")
+    #axdist.set_yscale("log")
     figdist.savefig("Plots/distance_attribute_"+method+".pdf")
     plt.close(figdist)
 
@@ -182,7 +182,7 @@ if __name__ == "__main__":
             os.mkdir(path)
 
     # Load default parameters
-    from params import params
+    from Hyperparameters.params import params
 
     captum_main(params)
 

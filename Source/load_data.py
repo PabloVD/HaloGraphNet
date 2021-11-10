@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------
 # Script for loading CAMELS data
 # Author: Pablo Villanueva Domingo
-# Last update: 5/11/21
+# Last update: 10/11/21
 #----------------------------------------------------------------------
 
 import h5py
@@ -9,14 +9,20 @@ from torch_geometric.data import Data, DataLoader
 from Source.constants import *
 from Source.plotting import *
 
-Nstar_th = 10
-radnorm = 8.    # ad hoc normalization for half-mass radius
-velnorm = 100.  # ad hoc normalization for velocity
+#--- FEATURES CHOICES ---#
 
 use_hmR = 1     # 1 for using the half-mass radius as feature
 use_vel = 1     # 1 for using subhalo velocity as feature
 only_positions = 0  # 1 for using only positions as features
-galcen_frame = 0    # 1 for writing positions and velocities in the central galaxy rest frame
+galcen_frame = 0    # 1 for writing positions and velocities in the central galaxy rest frame (otherwise it uses the total center of mass)
+
+#--- NORMALIZATION ---#
+
+Nstar_th = 10   # Minimum number of stellar particles required to consider a galaxy
+radnorm = 8.    # ad hoc normalization for half-mass radius
+velnorm = 1.  # ad hoc normalization for velocity
+
+#--- LOADING DATA ROUTINES ---#
 
 # Import h5py file to construct the general dataset
 # See for explanation of different field in Illustris files: https://www.tng-project.org/data/docs/specifications/#sec2a
@@ -26,6 +32,7 @@ def general_tab(path):
     # Read hdf5 file
     f = h5py.File(path, 'r')
 
+    # Load subhalo features
     SubhaloPos = f["Subhalo/SubhaloPos"][:]/boxsize
     SubhaloMassType = f["Subhalo/SubhaloMassType"][:,4]
     SubhaloLenType = f["Subhalo/SubhaloLenType"][:,4]
@@ -34,6 +41,7 @@ def general_tab(path):
     #SubhaloVel = np.sqrt(np.sum(SubhaloVel**2., 1))/velnorm
     HaloID = np.array(f["Subhalo/SubhaloGrNr"][:], dtype=np.int32)
 
+    # Load halo features
     #HaloMass = f["Group/GroupMass"][:]
     HaloMass = f["Group/Group_M_Crit200"][:]
     GroupPos = f["Group/GroupPos"][:]/boxsize
@@ -45,13 +53,16 @@ def general_tab(path):
 
     f.close()
 
+    # Create general table with subhalo properties
+    # Host halo ID, 3D position, stellar mass, number of stellar particles, stellar half-mass radius, 3D velocity
     tab = np.column_stack((HaloID, SubhaloPos, SubhaloMassType, SubhaloLenType, SubhaloHalfmassRadType, SubhaloVel))
 
-    tab = tab[tab[:,4]>0.]  # restrict to subhalos with stars
-    tab = tab[tab[:,5]>Nstar_th]  # more or less equivalent to the condition above
-    tab[:,4] = np.log10(tab[:,4])
+    tab = tab[tab[:,4]>0.]          # restrict to subhalos with stars
+    tab = tab[tab[:,5]>Nstar_th]    # more or less equivalent to the condition above
+    tab[:,4] = np.log10(tab[:,4])   # take the log of the stellar mass
 
-    tab = np.delete(tab, 5, 1)  # remove number of subhalos, since they are not observable
+    # Once restricted to a minimum number of stellar particles, remove this feature since it is not observable
+    tab = np.delete(tab, 5, 1)
 
     if not use_hmR:
         tab = np.delete(tab, 5, 1)  # remove SubhaloHalfmassRadType if not required
@@ -83,8 +94,8 @@ def split_datasets(dataset):
 
 
 # Correct periodic boundary effects
-# Some halo close to a boundary could have subhalos at the other extreme of the box, due to periodic boundary conditions
-# Just add or substract a length boxe in such cases
+# Some halos close to a boundary could have subhalos at the other extreme of the box, due to periodic boundary conditions
+# Just add or substract a length boxe in such cases to correct this artifact
 def correct_boundary(pos, boxlength=1.):
 
     for i, pos_i in enumerate(pos):
@@ -97,47 +108,46 @@ def correct_boundary(pos, boxlength=1.):
     return pos
 
 
-# Load data and create the dataset
+# Main routine to load data and create the dataset
 # simsuite: simulation suite, either "IllustrisTNG" or "SIMBA"
 # simset: set of simulations:
-#   LH: Use simulations over latin-hypercube, varying over cosmological and astrophysical parameters, and different random seeds (1000 simulations total)
 #   CV: Use simulations with fiducial cosmological and astrophysical parameters, but different random seeds (27 simulations total)
+#   LH: Use simulations over latin-hypercube, varying over cosmological and astrophysical parameters, and different random seeds (1000 simulations total)
 # n_sims: number of simulations, maximum 27 for CV and 1000 for LH
 def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
-    simset = "LH"; n_sims = 1000
 
     simpath = simpathroot + simsuite + "/"+simset+"_"
     print("Using "+simsuite+" simulation suite, "+simset+" set, "+str(n_sims)+" simulations.")
 
     dataset = []
-    subs = 0
-
-    #relerrorvels, velCM, velHalo = [], [], []
+    subs = 0    # Number of subhalos
 
     for sim in range(n_sims):
 
         # To see ls of columns of file, type in shell: h5ls -r fof_subhalo_tab_033.hdf5
         path = simpath + str(sim)+"/fof_subhalo_tab_033.hdf5"
 
-        # Load the table
+        # Load the table of galactic features from a single simulation
         tab, HaloMass, HaloPos, HaloVel, halolist = general_tab(path)
 
+        # For each halo in the simulation:
         for ind in halolist:
 
             # Select subhalos within a halo with index ind
             tab_halo = tab[tab[:,0]==ind][:,1:]
 
-            # Consider only halos with more than one satellite
+            # Consider only halos with at least one satellite galaxy (besides the central)
             if tab_halo.shape[0]>1:
 
+                # In case you want to employ the stellar center of mass velocity:
                 #velCMstar = np.dot(np.transpose(tab_halo[:,-3:]),tab_halo[:,3])/np.sum(tab_halo[:,3])
 
                 # If galcen_frame==1, write positions and velocities in the rest frame of the central galaxy
                 if galcen_frame:
                     tab_halo[:,:3] -= tab_halo[0,:3]
                     tab_halo[:,-3:] -= tab_halo[0,-3:]
+                # Otherwise, write the positions and velocities as the relative position and velocity to the host halo
                 else:
-                    # Write the positions and velocities as the relative position and velocity to the host halo
                     tab_halo[:,0:3] -= HaloPos[ind]
                     tab_halo[:,-3:] -= HaloVel[ind]
 
@@ -149,7 +159,7 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
                     if galcen_frame:
                         subhalovel = np.log10(1.+np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
                     else:
-                        subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))
+                        subhalovel = np.log10(np.sqrt(np.sum(tab_halo[:,-3:]**2., 1)))  # use this way in case you normalize velocities
                     newtab = np.column_stack((tab_halo[:,:-3], subhalovel))
                 else:
                     newtab = tab_halo[:,:-3]
@@ -164,16 +174,12 @@ def create_dataset(simsuite = "IllustrisTNG", simset = "CV", n_sims = 27):
                 # x: features (includes positions), pos: positions, u: global quantity
                 graph = Data(x=torch.tensor(newtab, dtype=torch.float32), pos=torch.tensor(tab_halo[:,:3], dtype=torch.float32), y=torch.tensor(np.log10(HaloMass[ind]), dtype=torch.float32), u=torch.tensor(u, dtype=torch.float))
 
-                # Number of subhalos
+                # Update the total number of subhalos
                 subs += graph.x.shape[0]
 
                 dataset.append(graph)
 
     print("Total number of halos", len(dataset), "Total number of subhalos", subs)
-    """print("VelCM rel",np.array(relerrorvels).mean())
-    velCM, velHalo = np.array(velCM), np.array(velHalo)
-    print(np.mean(velCM.mean(0)), np.mean(velHalo.mean(0)))"""
-    #print(np.array(errsposhalo).mean())
 
     # Number of features
     node_features = newtab.shape[1]

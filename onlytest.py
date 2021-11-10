@@ -5,7 +5,7 @@
 #------------------------------------------------
 
 from main import *
-from params import params
+from Hyperparameters.params import params
 
 #--- MAIN ---#
 

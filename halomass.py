@@ -5,8 +5,8 @@
 #-------------------------------------
 
 from main import *
-from params_TNG import params as params_TNG
-from params_SIMBA import params as params_SIMBA
+from Hyperparameters.params_TNG import params as params_TNG
+from Hyperparameters.params_SIMBA import params as params_SIMBA
 from matplotlib.ticker import MaxNLocator
 from scipy.spatial.transform import Rotation as Rot
 from Source.galaxies import MW_gals, M31_gals

@@ -1,7 +1,8 @@
-#--------
+#--------------------------------------------------------
 # Define galaxies with kinematic and internal properties
+# Author: Pablo Villanueva Domingo
 # Last update: 5/11/21
-#--------
+#--------------------------------------------------------
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -109,7 +110,7 @@ def visualize_galaxies(MW_gals, M31_gals):
 # SgrdSph and NGC147 are below the CAMELS threshold mass and thus should not be included, but we employ them for testing purposes
 
 # Milky Way halo
-# McConnachie12, Price-Whelan mail
+# McConnachie12, see our paper for more details
 velMW = [0., 0., 0.]    # MW velocity in galactocentric frame
 MW = galaxy("MW",[0., 0., 0.], velMW, 5.e10, velcen=velMW, use_cart=1)
 LMC = galaxy("LMC",[-0.56968243, -41.26318337, -27.13271726], [-75.0292706, -225.7814354,  217.12662424], 2.7e9, velcen=velMW, use_cart=1)

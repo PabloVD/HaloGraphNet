@@ -154,7 +154,7 @@ def fit(x, y):
 
 # Load data and plot some figures
 # See create_dataset function in Source/load_data for more details
-def correlation_plot(simset = "CV", n_sims = 27):
+def summary_plots(simset = "CV", n_sims = 27):
 
     #fig_scat, (ax_starmass, ax_vel, ax_hmR) = plt.subplots(1,3, figsize=(12,3), sharey=True)
     #fig_scat.subplots_adjust(wspace=0)
@@ -261,6 +261,7 @@ def correlation_plot(simset = "CV", n_sims = 27):
     #ax_hmR.yaxis.set_ticklabels([])
     #ax_vel.set_xscale("log")
     ax_starmass.grid()
+    ax_starmass.set_title(simset+" set")
     ax_starmass.legend(handles=customlegend)
 
     #for ax in [ax_starmass, ax_vel, ax_hmR]:
@@ -302,8 +303,8 @@ if __name__ == "__main__":
 
     if not os.path.exists("Plots"): os.mkdir("Plots")
 
-    correlation_plot(simset = "CV", n_sims = 27)
+    summary_plots(simset = "CV", n_sims = 27)
 
-    correlation_plot(simset = "LH", n_sims = 1000)
+    summary_plots(simset = "LH", n_sims = 1000)
 
     print("Finished. Time elapsed:",datetime.timedelta(seconds=time.time()-time_ini))

@@ -1,7 +1,7 @@
 #----------------------------------------------------
 # Main routine for training and testing GNN models
 # Author: Pablo Villanueva Domingo
-# Last update: 5/11/21
+# Last update: 10/11/21
 #----------------------------------------------------
 
 import time, datetime, psutil
@@ -15,6 +15,7 @@ from Source.load_data import *
 # If testsuite==True, it takes a model already pretrained in the other suite and tests it in the selected one
 def main(params, verbose = True, testsuite = False):
 
+    # Load hyperparameters
     use_model, learning_rate, weight_decay, n_layers, k_nn, n_epochs, training, simsuite, simset, n_sims = params
 
     # Load data and create dataset
@@ -49,7 +50,8 @@ def main(params, verbose = True, testsuite = False):
 
     if testsuite==True: params[7]=simsuite   # change after loading the model
 
-    test_loss, rel_err = test(test_loader, model, torch.nn.MSELoss(), params, message_reg=sym_reg)
+    # Test the model
+    test_loss, rel_err = test(test_loader, model, params)
     if verbose: print("Test Loss: {:.2e}, Relative error: {:.2e}".format(test_loss, rel_err))
 
     # Plot loss trends
@@ -59,8 +61,6 @@ def main(params, verbose = True, testsuite = False):
     # Plot true vs predicted halo masses
     plot_out_true_scatter(params, testsuite)
 
-    #if training:
-    #    return np.amin(valid_losses)
     return test_loss
 
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
             os.mkdir(path)
 
     # Load default parameters
-    from params import params
+    from Hyperparameters.params import params
 
     main(params)
 

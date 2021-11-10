@@ -1,7 +1,7 @@
 #----------------------------------------------------------------------
 # Script to visualize halos as graphs
 # Author: Pablo Villanueva Domingo
-# Last update: 16/6/21
+# Last update: 10/11/21
 #----------------------------------------------------------------------
 
 import time, datetime
@@ -9,35 +9,58 @@ from Source.networks import *
 from Source.plotting import *
 from Source.load_data import *
 
-# Visualization routine
-def visualize_points_3D(data, ind, edge_index=None):
 
-    pos = data.x[:,:3]
+# Visualization routine for plotting graphs
+def visualize_graph(data, ind, projection="3d", edge_index=None):
+
     fig = plt.figure(figsize=(4, 4))
-    ax = fig.add_subplot(projection ="3d")
 
+    if projection=="3d":
+        ax = fig.add_subplot(projection ="3d")
+        pos = data.x[:,:3]
+    elif projection=="2d":
+        ax = fig.add_subplot()
+        pos = data.x[:,:2]
+
+    # Draw lines for each edge
     if edge_index is not None:
         for (src, dst) in edge_index.t().tolist():
+
             src = pos[src].tolist()
             dst = pos[dst].tolist()
-            ax.plot([src[0], dst[0]], [src[1], dst[1]], zs=[src[2], dst[2]], linewidth=0.1, color='black')
 
-    ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=50, zorder=1000)
+            if projection=="3d":
+                ax.plot([src[0], dst[0]], [src[1], dst[1]], zs=[src[2], dst[2]], linewidth=0.1, color='black')
+            elif projection=="2d":
+                ax.plot([src[0], dst[0]], [src[1], dst[1]], linewidth=0.1, color='black')
+
+    # Plot nodes
+    if projection=="3d":
+        ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], s=50, zorder=1000)
+    elif projection=="2d":
+        ax.scatter(pos[:, 0], pos[:, 1], s=50, zorder=1000)
 
     #plt.axis('off')
     fig.savefig("Plots/visualize_graph_"+str(ind), bbox_inches='tight', dpi=300)
 
-# Main routine to train the neural net
+
+# Main routine to display graphs from several simulations
 def display_graphs(simsuite, simset, n_sims, k_nn):
+
+    # Max index of graphs to be displayed
+    nmax = 20
 
     # Load data and create dataset
     dataset, node_features = create_dataset(simsuite, simset, n_sims)
 
-    for i, data in enumerate(dataset[:20]):
-        if (i%2)==0:
+    for i, data in enumerate(dataset[:nmax]):
+        if (i%2)==0:    # take half of them
+
+            # Get edges from nearest neighbors within a radius k_nn
             edge_index = radius_graph(data.pos, r=k_nn)
-            #visualize_points(data, i, edge_index)
-            visualize_points_3D(data, i, edge_index)
+
+            #visualize_graph(data, i, "2d", edge_index)
+            visualize_graph(data, i, "3d", edge_index)
 
 
 #--- MAIN ---#

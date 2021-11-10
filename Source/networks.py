@@ -1,7 +1,8 @@
-#------------------------------------------------
+#----------------------------------------------------------------------
 # Definition of the neural network architectures
 # Author: Pablo Villanueva Domingo
-#------------------------------------------------
+# Last update: 10/11/21
+#----------------------------------------------------------------------
 
 import torch
 from torch.nn import Sequential, Linear, ReLU, ModuleList
@@ -12,6 +13,22 @@ from torch_cluster import knn_graph, radius_graph
 from torch_scatter import scatter_mean, scatter_sum, scatter_max, scatter_min
 import numpy as np
 
+#------------------------------
+# Architectures considered:
+#   DeepSet
+#   PointNet
+#   EdgeNet
+#   EdgePointLayer (a mix of the two above)
+#   Convolutional Graph Network
+#   Metalayer (graph network)
+#
+# See pytorch-geometric documentation for more info
+# pytorch-geometric.readthedocs.io/
+#-----------------------------
+
+#--------------------------------------------
+# Message passing architectures
+#--------------------------------------------
 
 # PointNet layer
 class PointNetLayer(MessagePassing):
@@ -209,9 +226,12 @@ class GlobalModel(torch.nn.Module):
         #print("global post",out.shape)
         return out
 
+
+#--------------------------------------------
 # General Graph Neural Network architecture
+#--------------------------------------------
 class ModelGNN(torch.nn.Module):
-    def __init__(self, use_model, node_features, n_layers, k_nn, hidden_channels=300, latent_channels=100, loop=True):
+    def __init__(self, use_model, node_features, n_layers, k_nn, hidden_channels=300, latent_channels=100, loop=False):
         super(ModelGNN, self).__init__()
 
         # Graph layers
@@ -269,7 +289,7 @@ class ModelGNN(torch.nn.Module):
         self.pooled = 0.
         self.h = 0.
         self.loop = loop
-        if use_model=="EdgeNet":    self.loop = False
+        if use_model=="PointNet" or use_model=="GCN":    self.loop = True
         self.namemodel = use_model
 
     def forward(self, data):
@@ -280,7 +300,7 @@ class ModelGNN(torch.nn.Module):
         #edge_index = knn_graph(pos, k=self.k_nn, batch=batch, loop=self.loop)
         edge_index = radius_graph(pos, r=self.k_nn, batch=batch, loop=self.loop)
 
-        # Start bipartite message passing
+        # Start message passing
         for layer in self.layers:
             if self.namemodel=="DeepSet":
                 x = layer(x)

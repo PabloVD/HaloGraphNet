@@ -19,19 +19,21 @@ Here is a brief description of the codes included:
 
 - `main.py`: main driver to train and test the network.
 
-- `params.py`: list of default hyperparameters, to be modified by the user.
-
 - `onlytest.py`: tests a pre-trained model.
 
 - `hyperparams_optimization.py`: optimize the hyperparameters using optuna.
 
-- `plotcorrelations.py`: plot several features of the CAMELS data.
+- `camelsplots.py`: plot several features of the CAMELS data.
 
 - `captumtest.py`: studies interpretability of the model.
 
 - `halomass.py`: using models trained in CAMELS, predicts the mass of real halos, such as the Milky Way and Andromeda.
 
-- `visualize_graphs.py`: display several halos as graphs.
+- `visualize_graphs.py`: display several halos as graphs in 2D or 3D.
+
+The folder `Hyperparameters` includes files with lists of default hyperparameters, to be modified by the user. The current files contain the best values for each CAMELS simulation suite and set separately, obtained from hyperparameter optimization.
+
+The folder `Models` includes some pre-trained models for the hyperparameters defined in `Hyperparameters`.
 
 In the folder `Source`, several auxiliary routines are defined:
 
@@ -39,13 +41,13 @@ In the folder `Source`, several auxiliary routines are defined:
 
 * `load_data.py`: contains routines to load data from simulation files.
 
-* `plotting.py`: includes functions for displaying the results.
+* `plotting.py`: includes functions for displaying the loss evolution and the results from the neural nets.
 
-* `networks.py`: includes the definition of the networks architectures.
+* `networks.py`: includes the definition of the Graph Neural Networks architectures.
 
-* `training.py`: includes routines for training the net.
+* `training.py`: includes routines for training and testing the net.
 
-* `galaxies.py`: contains data for real galaxies MW and M31.
+* `galaxies.py`: contains data for galaxies from the Milky Way and Andromeda halos.
 
 
 ## Requisites
@@ -58,7 +60,7 @@ The libraries required for training the models and compute some statistics are:
 * sklearn
 * optuna (only for optimization in `hyperparams_optimization.py`)
 * astropy (only for MW and M31 data in `Source/galaxies.py`)
-* captum  (only for `captumtest.py`)
+* captum  (only for interpretability in `captumtest.py`)
 
 
 ## Usage
@@ -66,9 +68,9 @@ The libraries required for training the models and compute some statistics are:
 These are some advices to employ the scripts described above:
 1. To perform a search of the optimal hyperparameters, run `hyperparams_optimization.py`.
 2. To train a model with a given set of parameters defined in `params.py`, run `main.py`.
-3. Once a model is trained, run `onlytest.py` to test in the training simulation suite and in the other one included in CAMELS (IllustrisTNG and SIMBA).
-4. Run `captumtest.py` to study the interpretability of the models, feature importance and saliency graph.
-5. Run `halomass.py` to infer the mass of the Milky Way and Andromeda, whose data are defined in `Source/galaxies.py`.
+3. Once a model is trained, run `onlytest.py` to test in the training simulation suite and cross test it in the other one included in CAMELS (IllustrisTNG and SIMBA).
+4. Run `captumtest.py` to study the interpretability of the models, feature importance and saliency graphs.
+5. Run `halomass.py` to infer the mass of the Milky Way and Andromeda, whose data are defined in `Source/galaxies.py`. For this, note that only models without the stellar mass radius as feature are considered.
 
 
 ## Citation
