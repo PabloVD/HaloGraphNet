@@ -5,7 +5,7 @@
 #------------------------------------------------
 
 from main import *
-from Hyperparameters.params import params
+from Hyperparameters.params_TNG_CV import params
 
 #--- MAIN ---#
 
