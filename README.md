@@ -1,6 +1,6 @@
 # HaloGraphNet
 
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.xxxx.svg)](https://zenodo.org/record/xxxx) [![arXiv](https://img.shields.io/badge/arXiv-2111.xxxx-B31B1B.svg)](http://arxiv.org/abs/2111.xxxx)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5676528.svg)](https://doi.org/10.5281/zenodo.5676528) [![arXiv](https://img.shields.io/badge/arXiv-2111.xxxx-B31B1B.svg)](http://arxiv.org/abs/2111.xxxx)
 
 Predict halo masses from simulations via Graph Neural Networks.
 
@@ -73,7 +73,7 @@ These are some advices to employ the scripts described above:
 
 ## Citation
 
-If you use the code, please link this repository, and cite [arXiv:2111.xxxx](https://arxiv.org/abs/2111.xxxx) and the DOI [10.5281/zenodo.xxxx](https://doi.org/10.5281/zenodo.xxxx).
+If you use the code, please link this repository, and cite [arXiv:2111.xxxx](https://arxiv.org/abs/2111.xxxx) and the DOI [10.5281/zenodo.5676528](https://doi.org/10.5281/zenodo.5676528).
 
 
 ## Contact
