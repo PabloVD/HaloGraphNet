@@ -8,8 +8,6 @@ Given a dark matter halo and its galaxies, creates a graph with information abou
 
 See the papers [arXiv:2111.xxxx](https://arxiv.org/abs/2111.xxxx) for more details.
 
-IN DEVELOPMENT
-
 <img src="visualize_graph.png" width="500">
 
 
