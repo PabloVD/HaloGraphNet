@@ -1,12 +1,12 @@
 # HaloGraphNet
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5676528.svg)](https://doi.org/10.5281/zenodo.5676528) [![arXiv](https://img.shields.io/badge/arXiv-2111.08683-B31B1B.svg)](http://arxiv.org/abs/2111.08683)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5676528.svg)](https://doi.org/10.5281/zenodo.5676528) [![arXiv](https://img.shields.io/badge/arXiv-2111.08683-B31B1B.svg)](http://arxiv.org/abs/2111.08683)  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Predict halo masses from simulations via Graph Neural Networks.
 
 Given a dark matter halo and its galaxies, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the mass of the host halo. Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) hydrodynamic simulations, specially suited for Machine Learning purposes. Neural nets architectures are defined making use of the package [PyTorch-geometric](https://pytorch-geometric.readthedocs.io/en/latest/).
 
-See the papers [arXiv:2111.08683](https://arxiv.org/abs/2111.08683) for more details.
+See the papers [arXiv:2111.08683](https://arxiv.org/abs/2111.08683) and [arXiv:2111.14874](https://arxiv.org/abs/2111.14874) for more details.
 
 <img src="visualize_graph.png" width="500">
 
