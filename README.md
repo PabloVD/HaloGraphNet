@@ -4,9 +4,9 @@
 
 Predict halo masses from simulations via Graph Neural Networks.
 
-Given a dark matter halo and its galaxies, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the mass of the host halo. Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) hydrodynamic simulations, specially suited for Machine Learning purposes. Neural nets architectures are defined making use of the package [PyTorch-geometric](https://pytorch-geometric.readthedocs.io/en/latest/).
+Given a dark matter halo and its galaxies, creates a graph with information about the 3D position, stellar mass and other properties. Then, it trains a Graph Neural Network to predict the mass of the host halo. Data are taken from the [CAMELS](https://camels.readthedocs.io/en/latest/index.html) hydrodynamic simulations, specially suited for Machine Learning purposes. Neural nets architectures are defined making use of the package [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/).
 
-See the papers [arXiv:2111.08683](https://arxiv.org/abs/2111.08683) and [arXiv:2111.14874](https://arxiv.org/abs/2111.14874) for more details.
+See the paper [arXiv:2111.08683](https://arxiv.org/abs/2111.08683) for more details, and [arXiv:2111.14874](https://arxiv.org/abs/2111.14874) for an application of these networks to weigh the total masses of the Milky Way and Andromeda.
 
 <img src="visualize_graph.png" width="500">
 
@@ -51,14 +51,14 @@ In the folder `Source`, several auxiliary routines are defined:
 ## Requisites
 
 The libraries required for training the models and compute some statistics are:
-* numpy
-* pytorch-geometric
-* matplotlib
-* scipy
-* sklearn
-* optuna (only for optimization in `hyperparams_optimization.py`)
-* astropy (only for MW and M31 data in `Source/galaxies.py`)
-* captum  (only for interpretability in `captumtest.py`)
+* [NumPy](https://numpy.org/)
+* [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/)
+* [Matplotlib](https://matplotlib.org/)
+* [SciPy](https://scipy.org/)
+* [Scikit-learn](https://scikit-learn.org/stable/)
+* [Optuna](https://optuna.org/) (only for optimization in `hyperparams_optimization.py`)
+* [Astropy](https://www.astropy.org/) (only for MW and M31 data in `Source/galaxies.py`)
+* [Captum](https://captum.ai/) (only for interpretability in `captumtest.py`)
 
 
 ## Usage
